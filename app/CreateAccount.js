@@ -15,6 +15,7 @@ const CreateAccount = () => {
         email: '',
         password: '',
     })
+
     const onPressLogin = () => {
         navigation.navigate('HomeScreen')
     }
@@ -35,6 +36,7 @@ const CreateAccount = () => {
                 <TextInput
                     style={styles.inputText}
                     placeholder='First Name'
+                    placeholderTextColor="white"
                     onChangeText={text => setState({ firstName: text })}
                 />
             </View>
@@ -42,6 +44,7 @@ const CreateAccount = () => {
                 <TextInput
                     style={styles.inputText}
                     placeholder='Last Name'
+                    placeholderTextColor="white"
                     onChangeText={text => setState({ lastName: text })}
                 />
             </View>
@@ -49,6 +52,7 @@ const CreateAccount = () => {
                 <TextInput
                     style={styles.inputText}
                     placeholder='Email'
+                    placeholderTextColor="white"
                     onChangeText={text => setState({ email: text })}
                 />
             </View>
@@ -57,6 +61,7 @@ const CreateAccount = () => {
                     style={styles.inputText}
 
                     placeholder='Create Password'
+                    placeholderTextColor="white"
                     onChangeText={text => setState({ password: text })}
                 />
             </View>
@@ -112,6 +117,9 @@ const styles = StyleSheet.create({
         marginTop: 40,
         marginBottom: 10
     },
+    loginText: {
+        color: 'white',
+    }
 
 });
 export default CreateAccount;
