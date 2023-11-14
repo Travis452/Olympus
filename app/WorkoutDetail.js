@@ -2,18 +2,23 @@ import { useState } from 'react';
 import { SPLITS } from '../data/SPLITS';
 import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Card } from '@rneui/base';
-import { useRoute } from '@react-navigation/native'
+import { useRoute, useNavigation } from '@react-navigation/native'
 
 
 
 const WorkoutDetail = () => {
+
     const { selectedSplitId } = useRoute().params
     const selectedSplit = SPLITS.find(split => split.id === selectedSplitId);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedWorkout, setSelectedWorkout] = useState(null);
+    const navigation = useNavigation();
+
+
 
     const openModal = (workout) => {
-        setSelectedWorkout(workout);
+
+        setSelectedWorkout(selectedSplit.muscles.find(muscle => muscle.title === workout));
         setModalVisible(true);
     };
 
@@ -21,6 +26,13 @@ const WorkoutDetail = () => {
         setSelectedWorkout(null);
         setModalVisible(false);
     }
+
+    const startWorkout = () => {
+        setModalVisible(false);
+        navigation.navigate('StartWorkout', {
+            selectedWorkout,
+        });
+    };
 
     return (
         <ScrollView style={styles.container}>
@@ -31,9 +43,10 @@ const WorkoutDetail = () => {
                     onPress={() => openModal(muscle.title)}>
                     <Card containerStyle={styles.cardContainer} key={muscle.id}>
                         <Card.Title>{muscle.title}</Card.Title>
+                        {/* string template literal */}
                         {muscle.exercises.map((exercise, index) => (
 
-                            <Text>{exercise}</Text>
+                            <Text>{exercise.sets}x{exercise.reps} {exercise.title}</Text>
 
                         ))}
                     </Card>
@@ -44,7 +57,7 @@ const WorkoutDetail = () => {
                     <View style={styles.modalContainer}>
                         <Text>Would you like to start this Workout?</Text>
                         <View style={styles.buttonContainer}>
-                            <TouchableOpacity onPress={closeModal} style={styles.startBtn}>
+                            <TouchableOpacity onPress={startWorkout} style={styles.startBtn}>
                                 <Text>Start</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={closeModal} style={styles.cancelBtn}>

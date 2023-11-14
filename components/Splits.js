@@ -5,13 +5,13 @@ import { useNavigation } from '@react-navigation/native';
 import { SPLITS } from '../data/SPLITS';
 import WorkoutCard from './WorkoutCard';
 
-const Splits = () => {
-    const naviagtion = useNavigation();
+const Splits = ({ route }) => {
+    const navigation = useNavigation();
 
     const onPressSplit = (selectedSplitId) => {
 
 
-        naviagtion.navigate('WorkoutDetail', { selectedSplitId });
+        navigation.navigate('WorkoutDetail', { selectedSplitId });
 
     }
     return (
