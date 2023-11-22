@@ -1,12 +1,26 @@
 import { StyleSheet, Text, TouchableOpacity, ImageBackground, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useState, useEffect } from 'react';
 
 
 const Signup = () => {
     const navigation = useNavigation();
+    const [isSignedUp, setIsSignedUp] = useState(false);
+
+    useEffect(() => {
+        if (isSignedUp) {
+            navigation.navigate('HomeScreen');
+        }
+    })
+
 
     const onPressSignUp = () => {
         navigation.navigate('CreateAccount');
+    }
+
+
+    const onPressLogin = () => {
+        navigation.navigate('HomeScreen');
     }
 
 
@@ -23,6 +37,11 @@ const Signup = () => {
                     onPress={onPressSignUp}
                     style={styles.signupBtn}>
                     <Text style={styles.btnText}>Signup</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={onPressLogin}>
+                    <Text style={styles.btnText}>Login</Text>
                 </TouchableOpacity>
             </ImageBackground>
         </View>

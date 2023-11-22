@@ -41,12 +41,12 @@ const WorkoutDetail = () => {
                 <TouchableOpacity
                     key={muscle.id}
                     onPress={() => openModal(muscle.title)}>
-                    <Card containerStyle={styles.cardContainer} key={muscle.id}>
+                    <Card containerStyle={styles.cardContainer}>
                         <Card.Title>{muscle.title}</Card.Title>
                         {/* string template literal */}
                         {muscle.exercises.map((exercise, index) => (
 
-                            <Text>{exercise.sets}x{exercise.reps} {exercise.title}</Text>
+                            <Text key={index}>{exercise.sets}x{exercise.reps} {exercise.title}</Text>
 
                         ))}
                     </Card>

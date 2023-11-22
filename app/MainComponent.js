@@ -7,6 +7,7 @@ import Profile from './Profile';
 import StartWorkout from './StartWorkout';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import useAuth from '../hooks/useAuth';
 
 const Tab = createBottomTabNavigator();
 
@@ -15,92 +16,149 @@ const Tab = createBottomTabNavigator();
 
 
 const Main = () => {
-    return (
-        <>
+
+    const { user } = useAuth();
+    if (user) {
+
+        return (
+            <>
+                <Tab.Navigator>
+
+
+                    <Tab.Screen name='WorkoutDetail'
+                        component={WorkoutDetail}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            tabBarShowLabel: false,
+                            headerShown: false,
+
+                        }}
+                    />
+
+
+                    <Tab.Screen
+                        name='HomeScreen'
+                        component={HomeScreen}
+                        options={{
+                            headerShown: false,
+                            tabBarIcon: () => (<MaterialCommunityIcons name='home' size={26} />)
+                        }}
+                    />
+
+                    <Tab.Screen
+                        name='Profile'
+                        component={Profile}
+                        options={{
+                            href: 'Profile',
+                            tabBarIcon: () => (<MaterialCommunityIcons name='account' size={26} />)
+                        }}
+                    />
+                    <Tab.Screen
+                        name='StartWorkout'
+                        component={StartWorkout}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            headerShown: false,
+                            href: null
+                        }}
+                    />
+                </Tab.Navigator>
+
+
+            </>
+        );
+
+    } else {
+        return (
+            <>
 
 
 
 
-            <Tab.Navigator>
+                <Tab.Navigator>
 
-                <Tab.Screen
-                    name='Sign-Up'
-                    component={Signup}
+                    <Tab.Screen
+                        name='Sign-Up'
+                        component={Signup}
 
-                    options={{
-                        tabBarStyle: { display: 'none' },
-                        tabBarItemStyle: { display: 'none' },
-                        tabBarShowLabel: false,
-                        headerShown: false,
-
-
-                    }}
-                />
-                <Tab.Screen name='WorkoutDetail'
-                    component={WorkoutDetail}
-                    options={{
-                        tabBarStyle: { display: 'none' },
-                        tabBarItemStyle: { display: 'none' },
-                        tabBarShowLabel: false,
-                        headerShown: false,
-
-                    }}
-                />
-                <Tab.Screen
-                    name='CreateAccount'
-                    component={CreateAccount}
-                    options={{
-                        tabBarStyle: { display: 'none' },
-                        tabBarItemStyle: { display: 'none' },
-                        headerShown: false,
-                        href: null
-                    }}
-                />
-
-                <Tab.Screen
-                    name='Login'
-                    component={Login}
-                    options={{
-                        tabBarStyle: { display: 'none' },
-                        tabBarItemStyle: { display: 'none' },
-                        headerShown: false,
-                        href: null
-                    }}
-                />
-
-                <Tab.Screen
-                    name='HomeScreen'
-                    component={HomeScreen}
-                    options={{
-                        headerShown: false,
-                        tabBarIcon: () => (<MaterialCommunityIcons name='home' size={26} />)
-                    }}
-                />
-
-                <Tab.Screen
-                    name='Profile'
-                    component={Profile}
-                    options={{
-                        href: 'Profile',
-                        tabBarIcon: () => (<MaterialCommunityIcons name='account' size={26} />)
-                    }}
-                />
-                <Tab.Screen
-                    name='StartWorkout'
-                    component={StartWorkout}
-                    options={{
-                        tabBarStyle: { display: 'none' },
-                        tabBarItemStyle: { display: 'none' },
-                        headerShown: false,
-                        href: null
-                    }}
-                />
-            </Tab.Navigator>
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            tabBarShowLabel: false,
+                            headerShown: false,
 
 
+                        }}
+                    />
+                    <Tab.Screen name='WorkoutDetail'
+                        component={WorkoutDetail}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            tabBarShowLabel: false,
+                            headerShown: false,
+
+                        }}
+                    />
+                    <Tab.Screen
+                        name='CreateAccount'
+                        component={CreateAccount}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            headerShown: false,
+                            href: null
+                        }}
+                    />
+
+                    <Tab.Screen
+                        name='Login'
+                        component={Login}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            headerShown: false,
+                            href: null
+                        }}
+                    />
+
+                    <Tab.Screen
+                        name='HomeScreen'
+                        component={HomeScreen}
+                        options={{
+                            headerShown: false,
+                            tabBarIcon: () => (<MaterialCommunityIcons name='home' size={26} />)
+                        }}
+                    />
+
+                    <Tab.Screen
+                        name='Profile'
+                        component={Profile}
+                        options={{
+                            href: 'Profile',
+                            tabBarIcon: () => (<MaterialCommunityIcons name='account' size={26} />)
+                        }}
+                    />
+                    <Tab.Screen
+                        name='StartWorkout'
+                        component={StartWorkout}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            headerShown: false,
+                            href: null
+                        }}
+                    />
+                </Tab.Navigator>
 
 
-        </>
-    )
+
+
+            </>
+        )
+    }
+
 }
 export default Main;

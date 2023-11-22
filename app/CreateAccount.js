@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { StyleSheet, SafeAreaView, ScrollView, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config/firebase';
 
 
 const CreateAccount = () => {
@@ -16,11 +18,23 @@ const CreateAccount = () => {
         password: '',
     })
 
-    const onPressLogin = () => {
-        navigation.navigate('HomeScreen')
+
+
+    const handleSubmit = async () => {
+        const { email, password } = state;
+
+        try {
+
+            if (email && password) {
+
+                await createUserWithEmailAndPassword(auth, email, password)
+
+                navigation.navigate('HomeScreen');
+            }
+        } catch (err) {
+            console.log('got error:', err.message);
+        }
     }
-
-
 
 
 
@@ -37,7 +51,8 @@ const CreateAccount = () => {
                     style={styles.inputText}
                     placeholder='First Name'
                     placeholderTextColor="white"
-                    onChangeText={text => setState({ firstName: text })}
+                    value={state.firstName}
+                    onChangeText={(value) => setState({ ...state, firstName: value })}
                 />
             </View>
             <View style={styles.inputView}>
@@ -45,7 +60,8 @@ const CreateAccount = () => {
                     style={styles.inputText}
                     placeholder='Last Name'
                     placeholderTextColor="white"
-                    onChangeText={text => setState({ lastName: text })}
+                    value={state.lastName}
+                    onChangeText={(value) => setState({ ...state, lastName: value })}
                 />
             </View>
             <View style={styles.inputView}>
@@ -53,7 +69,8 @@ const CreateAccount = () => {
                     style={styles.inputText}
                     placeholder='Email'
                     placeholderTextColor="white"
-                    onChangeText={text => setState({ email: text })}
+                    value={state.email}
+                    onChangeText={(value) => setState({ ...state, email: value })}
                 />
             </View>
             <View style={styles.inputView}>
@@ -62,18 +79,21 @@ const CreateAccount = () => {
 
                     placeholder='Create Password'
                     placeholderTextColor="white"
-                    onChangeText={text => setState({ password: text })}
+                    value={state.password}
+                    onChangeText={(value) => setState({ ...state, password: value })}
                 />
             </View>
             <TouchableOpacity
-                onPress={onPressLogin}
+                onPress={handleSubmit}
                 style={styles.loginBtn}>
                 <Text style={styles.loginText}>Sign Up</Text>
             </TouchableOpacity>
 
         </SafeAreaView>
     )
+
 }
+
 
 
 
