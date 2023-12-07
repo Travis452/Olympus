@@ -1,21 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, ScrollView, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
 
 
 const Login = () => {
 
 
     const navigation = useNavigation();
+    const auth = getAuth();
 
     const [state, setState] = useState({
         email: '',
         password: '',
     })
-    const onPressLogin = () => {
 
+    const onPressLogin = async () => {
+        try {
+            await signInWithEmailAndPassword(auth, state.email, state.password);
+        } catch (error) {
+            console.error('Login Failed', error.message);
+        }
     }
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                navigation.navigate('HomeScreen');
+            }
+        })
+
+        return () => {
+            unsubscribe();
+        }
+    }, [auth, navigation]);
 
     const onPressForgotPassword = () => {
 
@@ -31,14 +49,14 @@ const Login = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Stack.Screen />
+
 
             <Text style={styles.title}>Login</Text>
             <View style={styles.inputView}>
                 <TextInput
                     style={styles.inputText}
                     placeholder='Email'
-                    onChangeText={text => setState({ email: text })}
+                    onChangeText={(value) => setState({ ...state, email: value })}
                 />
             </View>
             <View style={styles.inputView}>
@@ -46,7 +64,7 @@ const Login = () => {
                     style={styles.inputText}
 
                     placeholder='Password'
-                    onChangeText={text => setState({ password: text })}
+                    onChangeText={(value) => setState({ ...state, password: value })}
                 />
             </View>
             <TouchableOpacity

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SPLITS } from '../data/SPLITS';
 import WorkoutCard from './WorkoutCard';
 
-const Splits = ({ route }) => {
+const Splits = () => {
     const navigation = useNavigation();
 
     const onPressSplit = (selectedSplitId) => {
@@ -52,4 +52,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default Splits;
+export default Splits;             

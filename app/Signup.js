@@ -20,7 +20,7 @@ const Signup = () => {
 
 
     const onPressLogin = () => {
-        navigation.navigate('HomeScreen');
+        navigation.navigate('Login');
     }
 
 

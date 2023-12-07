@@ -8,6 +8,7 @@ import { useRoute, useNavigation } from '@react-navigation/native'
 
 const WorkoutDetail = () => {
 
+
     const { selectedSplitId } = useRoute().params
     const selectedSplit = SPLITS.find(split => split.id === selectedSplitId);
     const [modalVisible, setModalVisible] = useState(false);
@@ -31,13 +32,14 @@ const WorkoutDetail = () => {
         setModalVisible(false);
         navigation.navigate('StartWorkout', {
             selectedWorkout,
+            selectedSplitId
         });
     };
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.title}>{selectedSplit.title}</Text>
-            {selectedSplit.muscles.map((muscle) => (
+            <Text style={styles.title}>{selectedSplit?.title}</Text>
+            {selectedSplit?.muscles.map((muscle) => (
                 <TouchableOpacity
                     key={muscle.id}
                     onPress={() => openModal(muscle.title)}>
@@ -140,3 +142,4 @@ const styles = StyleSheet.create({
 });
 
 export default WorkoutDetail;
+

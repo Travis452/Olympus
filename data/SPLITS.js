@@ -6,7 +6,7 @@ export const SPLITS = [
         title: 'Bro Split',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Chest',
                 exercises: [
                     { title: 'Flat Bench Press', sets: 4, reps: 10 },
@@ -16,7 +16,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Back',
                 exercises: [
                     { title: 'Pull Ups', sets: 4, reps: 10 },
@@ -26,7 +26,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 2,
+                id: 3,
                 title: 'Shoulders',
                 exercises: [
                     { title: 'Shoulder Press', sets: 4, reps: 10 },
@@ -36,7 +36,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 3,
+                id: 4,
                 title: 'Legs',
                 exercises: [
                     { title: 'Barbell Squats', sets: 4, reps: 10 },
@@ -48,7 +48,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 4,
+                id: 5,
                 title: 'Arms',
                 exercises: [
                     { title: 'Barbell Curls', sets: 4, reps: 10 },
@@ -66,7 +66,7 @@ export const SPLITS = [
         title: 'Arnold Split',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Chest & Back',
                 exercises: [
                     { title: 'Bench Press', sets: 4, reps: 10 },
@@ -78,7 +78,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Shoulders & Arms',
                 exercises: [
                     { title: 'Military Press', sets: 4, reps: 10 },
@@ -92,7 +92,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 2,
+                id: 3,
                 title: 'Legs',
                 exercises: [
                     { title: 'Squats', sets: 4, reps: 10 },
@@ -110,7 +110,7 @@ export const SPLITS = [
         title: 'PPL',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Push',
                 exercises: [
                     { title: 'Bench Press', sets: 4, reps: 10 },
@@ -126,7 +126,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Pull',
                 exercises: [
                     { title: 'Pull-Ups', sets: 4, reps: 10 },
@@ -138,7 +138,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 2,
+                id: 3,
                 title: 'Legs',
                 exercises: [
                     { title: 'Squats', sets: 4, reps: 10 },
@@ -155,7 +155,7 @@ export const SPLITS = [
         title: 'Body Part Split',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Chest & Triceps',
                 exercises: [
                     { title: 'Bench Press', sets: 4, reps: 10 },
@@ -166,7 +166,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Back & Biceps',
                 exercises: [
                     { title: 'Pull-Ups', sets: 4, reps: 10 },
@@ -178,7 +178,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 2,
+                id: 3,
                 title: 'Legs & Shoulders',
                 exercises: [
                     { title: 'Squats', sets: 4, reps: 10 },
@@ -197,7 +197,7 @@ export const SPLITS = [
         title: 'Full Body',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Day 1',
                 exercises: [
                     { title: 'Bench Press', sets: 4, reps: 10 },
@@ -208,7 +208,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Day 2',
                 exercises: [
                     { title: 'Military Press', sets: 4, reps: 10 },
@@ -219,7 +219,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 2,
+                id: 3,
                 title: 'Day 3',
                 exercises: [
                     { title: 'Dumbbell Bench Press', sets: 4, reps: 10 },
@@ -236,7 +236,7 @@ export const SPLITS = [
         title: 'Upper Lower',
         muscles: [
             {
-                id: 0,
+                id: 1,
                 title: 'Upper Body',
                 exercises: [
                     { title: 'Bench Press', sets: 4, reps: 10 },
@@ -247,7 +247,7 @@ export const SPLITS = [
                 ],
             },
             {
-                id: 1,
+                id: 2,
                 title: 'Lower Body',
                 exercises: [
                     { title: 'Squats', sets: 4, reps: 10 },

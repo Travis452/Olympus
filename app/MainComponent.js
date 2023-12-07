@@ -5,9 +5,14 @@ import CreateAccount from './CreateAccount';
 import Login from './Login';
 import Profile from './Profile';
 import StartWorkout from './StartWorkout';
+import Exercises from './Exercises';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import useAuth from '../hooks/useAuth';
+import { useState, useEffect } from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useNavigation } from '@react-navigation/native';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -17,7 +22,23 @@ const Tab = createBottomTabNavigator();
 
 const Main = () => {
 
-    const { user } = useAuth();
+
+    const auth = getAuth();
+
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        })
+        return unsubscribe();
+    }, [auth]);
+    const navigation = useNavigation();
+    useEffect(() => {
+        if (user) {
+            navigation.navigate('HomeScreen');
+        }
+    }, [user, navigation]);
     if (user) {
 
         return (
@@ -64,6 +85,15 @@ const Main = () => {
                             href: null
                         }}
                     />
+
+                    <Tab.Screen
+                        name='Exercises'
+                        component={Exercises}
+                        options={{
+                            headerShown: false,
+                            tabBarIcon: () => (<MaterialCommunityIcons name='account' size={26} />)
+                        }}
+                    />
                 </Tab.Navigator>
 
 
@@ -78,6 +108,15 @@ const Main = () => {
 
 
                 <Tab.Navigator>
+
+                    {/* <Tab.Screen
+                        name='Exercises'
+                        component={Exercises}
+                        options={{
+                            headerShown: false,
+                            tabBarIcon: () => (<MaterialCommunityIcons name='dumbbell' size={26} />)
+                        }}
+                    /> */}
 
                     <Tab.Screen
                         name='Sign-Up'

@@ -1,19 +1,61 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebase'
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useNavigation } from '@react-navigation/native';
+
+
 
 const StartWorkout = ({ route }) => {
 
-    const { selectedWorkout } = route.params;
-    const { exercises, id, title } = selectedWorkout
-    const sets = exercises.length > 0 ? exercises[0].sets : 0;
+    const navigation = useNavigation();
+    const { selectedWorkout, selectedSplitId } = route.params;
 
-    const [setInputs, setSetInputs] = useState(() => {
 
+    const { exercises, title } = selectedWorkout
+
+
+
+
+
+
+
+    const initializeSetInputs = (exercises) => {
         return exercises.map((exercise) =>
             Array(exercise.sets).fill().map(() => ({ lbs: '', reps: '' }))
         );
-    });
+    }
 
+
+    //Going back to previous page.
+    const handleBack = () => {
+
+        setSetInputs(initialSetInputs)
+        navigation.navigate('WorkoutDetail', { selectedSplitId });
+    }
+
+    //Getting authentication 
+    const auth = getAuth();
+
+    const [currentUser, setCurrentUser] = useState(null);
+
+    //inputting the sets data 
+
+
+    const sets = exercises.length > 0 ? exercises[0].sets : 0;
+    const initialSetInputs = initializeSetInputs(exercises);
+    const [setInputs, setSetInputs] = useState(initialSetInputs)
+
+
+
+    const handleAddSet = (exerciseIndex) => {
+        const newSetInputs = [...setInputs];
+        newSetInputs[exerciseIndex].push({ lbs: '', reps: '' })
+        setSetInputs(newSetInputs);
+    }
+
+    //State for workout Timer
     const [timer, setTimer] = useState(0);
 
     useEffect(() => {
@@ -23,17 +65,134 @@ const StartWorkout = ({ route }) => {
         return () => clearInterval(interval);
     }, []);
 
+    //Handle input change for lbs and reps
     const handleInputChange = (exerciseIndex, setIndex, key, value) => {
         const newSetInputs = [...setInputs];
         newSetInputs[exerciseIndex][setIndex][key] = value;
         setSetInputs(newSetInputs);
     };
 
+    //Formatting time into minutes and seconds
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
     }
+
+    //Authentication Listener
+    useEffect(() => {
+
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                //User is Signed in.
+                setCurrentUser(user);
+            } else {
+                setCurrentUser(null);
+            }
+        })
+
+        return () => {
+            unsubscribe();
+        }
+    }, [auth]);
+
+
+    //Listening for previous data fetch 
+    useEffect(() => {
+        async function fetchData() {
+            if (currentUser && selectedWorkout.id) {
+
+                setPreviousData([]);
+                await fetchPreviousWorkout();
+            }
+        }
+        fetchData();
+    }, [currentUser, selectedWorkout.id]);
+    const [previousData, setPreviousData] = useState([]);
+
+    // console.log('Render Previous Data:', previousData);
+
+    //Save workout data to firebase
+    const saveWorkoutData = async () => {
+
+
+
+
+        try {
+            if (currentUser) {
+                const workoutData = {
+                    userId: currentUser.uid,
+                    workoutTitle: title,
+                    exercises: exercises.map((exercise, exerciseIndex) => ({
+                        title: exercise.title,
+                        sets: Array(exercise.sets).fill().map((_, setIndex) => ({
+                            lbs: setInputs[exerciseIndex][setIndex].lbs,
+                            reps: setInputs[exerciseIndex][setIndex].reps,
+                        })),
+                    })),
+                    timestamp: new Date(),
+                };
+
+                const docRef = await addDoc(collection(db, 'workouts'), workoutData)
+                console.log('Workout data added with ID', docRef.id);
+            } else {
+                console.error('User is not authenticated');
+            }
+        } catch (error) {
+            console.error('Error adding workout data:', error);
+        }
+
+    }
+
+    const fetchPreviousWorkout = async () => {
+        try {
+            if (currentUser) {
+                const querySnapshot = await getDocs(
+                    query(
+                        collection(db, 'workouts'),
+                        where('userId', '==', currentUser.uid),
+                        where('workoutTitle', '==', title),
+                        orderBy('timestamp', 'desc'),
+                        limit(1)
+                    )
+                );
+                const previousData = [];
+
+                if (querySnapshot.size > 0) {
+                    const latestWorkout = querySnapshot.docs[0].data();
+
+                    exercises.forEach((exercise) => {
+                        const previousExerciseData = latestWorkout.exercises.find(
+                            (prevExercise) => prevExercise.title === exercise.title
+                        );
+
+                        if (previousExerciseData) {
+                            const previousSetData = previousExerciseData.sets.map((set) => ({
+                                lbs: set.lbs,
+                                reps: set.reps,
+                            }));
+
+                            previousData.push({
+                                exerciseTitle: exercise.title,
+                                sets: previousSetData,
+                            });
+                        }
+                    });
+
+
+                };
+
+                setPreviousData(previousData);
+                console.log('Fetched Data', previousData)
+            }
+        } catch (error) {
+            console.error('Error fetching previous data:', error);
+        }
+    }
+
+
+
 
 
     return (
@@ -41,6 +200,9 @@ const StartWorkout = ({ route }) => {
             <View style={styles.timerContainer}>
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.timerText}>{formatTime(timer)}</Text>
+                <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+                    <Text>Back</Text>
+                </TouchableOpacity>
             </View>
             {exercises && exercises.map((exercise, exerciseIndex) => (
                 <View key={exerciseIndex} style={styles.exerciseContainer}>
@@ -67,31 +229,63 @@ const StartWorkout = ({ route }) => {
                                     </Text>
                                 </TouchableOpacity>
                             </View>
+
+                            <TextInput
+                                placeholder='---'
+                                editable={false}
+                                style={styles.input}
+                                value={
+                                    previousData.length > 0
+                                        && previousData[exerciseIndex]
+                                        && previousData[exerciseIndex].sets
+                                        && previousData[exerciseIndex].sets[setIndex]
+                                        && previousData[exerciseIndex].sets[setIndex].lbs
+                                        ? `${previousData[exerciseIndex].sets[setIndex].lbs} lbs`
+                                        : ''
+
+                                }
+                            />
+
                             <TextInput
                                 style={styles.input}
                                 placeholder='lbs'
                                 keyboardType='numeric'
-                                value={setInputs[exerciseIndex][setIndex].lbs}
+                                value={setInputs[exerciseIndex] && setInputs[exerciseIndex][setIndex]
+                                    ? setInputs[exerciseIndex][setIndex].lbs : ''}
                                 onChangeText={(value) => handleInputChange(exerciseIndex, setIndex, 'lbs', value)}
                             />
                             <TextInput
                                 style={styles.input}
                                 placeholder='Reps'
                                 keyboardType='numeric'
-                                value={setInputs[exerciseIndex][setIndex].reps}
+                                value={setInputs[exerciseIndex] && setInputs[exerciseIndex][setIndex]
+                                    ? setInputs[exerciseIndex][setIndex].reps : ''}
                                 onChangeText={(value) => handleInputChange(exerciseIndex, setIndex, 'reps', value)}
                             />
 
                         </View>
                     ))}
-                </View>
-            ))}
 
+                </View>
+
+            ))}
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.saveButton} onPress={saveWorkoutData}>
+                    <Text style={styles.saveBtnTxt}>Save Workout</Text>
+                </TouchableOpacity>
+            </View>
         </ScrollView>
     );
 };
 
+
+
 const styles = StyleSheet.create({
+    buttonContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 20,
+    },
     container: {
         flexGrow: 1,
         padding: 20,
@@ -164,6 +358,30 @@ const styles = StyleSheet.create({
         width: '20%',
         borderRadius: 5,
         alignItems: 'center',
+    },
+    saveButton: {
+        alignSelf: 'center',
+        width: '80%',
+        backgroundColor: '#dc143c',
+        borderRadius: 10,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20
+    },
+    saveBtnTxt: {
+        color: 'white'
+    },
+    backBtn: {
+        alignSelf: 'center',
+        width: '30%',
+        backgroundColor: '#dc143c',
+        borderRadius: 10,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10,
+        marginLeft: 120
     }
 
 });

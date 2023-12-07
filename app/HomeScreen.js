@@ -1,7 +1,5 @@
-
-
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Splits from '../components/Splits';
 
@@ -10,31 +8,29 @@ const HomeScreen = () => {
 
     return (
         <SafeAreaView>
-            <FlatList
-                data={Splits}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <React.Fragment>
-                        <Text style={styles.title}>Start Workout</Text>
-                        <View>
-                            <Text style={styles.text}>Quick Start</Text>
-                        </View>
-                        <View style={styles.btnView}>
-                            <TouchableOpacity style={styles.randomBtn}>
-                                <Text style={styles.btnTxt}>Random Workout</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.titleContainer}>
-                            <Text style={styles.smTitle}>Custom Workouts</Text>
-                            <Text style={styles.text}> My Custom Workouts </Text>
-                        </View>
-                        <View style={styles.titleContainer}>
-                            <Text style={styles.smTitle}>Example Workouts</Text>
-                        </View>
-                        <Splits />
-                    </React.Fragment>
-                )}
-            />
+
+            <ScrollView>
+                <Text style={styles.title}>Start Workout</Text>
+                <View>
+                    <Text style={styles.text}>Quick Start</Text>
+                </View>
+                <View style={styles.btnView}>
+                    <TouchableOpacity style={styles.randomBtn}>
+                        <Text style={styles.btnTxt}>Random Workout</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.smTitle}>Custom Workouts</Text>
+                    <Text style={styles.text}> My Custom Workouts </Text>
+                </View>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.smTitle}>Example Workouts</Text>
+                </View>
+            </ScrollView>
+            <Splits />
+
+
+
         </SafeAreaView>
     );
 };

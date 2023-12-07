@@ -10,6 +10,7 @@ const CreateAccount = () => {
 
 
     const navigation = useNavigation();
+    cont[isSignedUp, setIsSignedUp] = useState(false);
 
     const [state, setState] = useState({
         firstName: '',
@@ -33,6 +34,11 @@ const CreateAccount = () => {
             }
         } catch (err) {
             console.log('got error:', err.message);
+        };
+
+        if (isSignedUp) {
+            navigation.navigate('HomeScreen');
+            return null;
         }
     }
 
