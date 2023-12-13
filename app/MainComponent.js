@@ -49,8 +49,8 @@ const Main = () => {
                     <Tab.Screen name='WorkoutDetail'
                         component={WorkoutDetail}
                         options={{
-                            tabBarStyle: { display: 'none' },
-                            tabBarItemStyle: { display: 'none' },
+
+                            headerShown: false,
                             tabBarShowLabel: false,
                             headerShown: false,
 
@@ -134,11 +134,8 @@ const Main = () => {
                     <Tab.Screen name='WorkoutDetail'
                         component={WorkoutDetail}
                         options={{
-                            tabBarStyle: { display: 'none' },
                             tabBarItemStyle: { display: 'none' },
-                            tabBarShowLabel: false,
                             headerShown: false,
-
                         }}
                     />
                     <Tab.Screen

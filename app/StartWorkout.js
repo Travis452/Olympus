@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { incrementTimer, resetTimer, setTimer } from '../src/redux/actions/timerActions'
+import { View, Text, TextInput, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native'
 import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase'
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 
 
@@ -20,7 +23,6 @@ const StartWorkout = ({ route }) => {
 
 
 
-
     const initializeSetInputs = (exercises) => {
         return exercises.map((exercise) =>
             Array(exercise.sets).fill().map(() => ({ lbs: '', reps: '' }))
@@ -30,10 +32,11 @@ const StartWorkout = ({ route }) => {
 
     //Going back to previous page.
     const handleBack = () => {
-
-        setSetInputs(initialSetInputs)
+        dispatch(setTimer(-2));
         navigation.navigate('WorkoutDetail', { selectedSplitId });
     }
+
+
 
     //Getting authentication 
     const auth = getAuth();
@@ -56,14 +59,59 @@ const StartWorkout = ({ route }) => {
     }
 
     //State for workout Timer
-    const [timer, setTimer] = useState(0);
+    const dispatch = useDispatch();
+    const timer = useSelector(state => state);
+    const [isPaused, setIsPaused] = useState(false);
+    const [timerInterval, setTimerInterval] = useState(null);
+
+
+    const togglePause = () => {
+        setIsPaused(!isPaused);
+    }
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setTimer((prevTimer) => prevTimer + 1);
+
+        let interval;
+
+        dispatch(resetTimer());
+        // Start the timer with a delay of 1 second
+        const timerDelay = setTimeout(() => {
+            interval = setInterval(() => {
+                dispatch(incrementTimer());
+            }, 1000);
+            setTimerInterval(interval);
         }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+
+        return () => {
+            clearTimeout(timerDelay);
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+
+
+
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (isPaused && timerInterval) {
+            clearInterval(timerInterval);
+            setTimerInterval(null); // Ensure to clear the interval reference
+        } else if (!isPaused && !timerInterval) {
+            // Restart the timer when unpaused
+            const interval = setInterval(() => {
+                dispatch(incrementTimer());
+            }, 1000);
+            setTimerInterval(interval);
+        }
+
+        return () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+        };
+    }, [isPaused, timerInterval, dispatch]);
+
 
     //Handle input change for lbs and reps
     const handleInputChange = (exerciseIndex, setIndex, key, value) => {
@@ -74,8 +122,9 @@ const StartWorkout = ({ route }) => {
 
     //Formatting time into minutes and seconds
     const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
+        const positiveSeconds = Math.max(seconds, 0);
+        const minutes = Math.floor(positiveSeconds / 60);
+        const remainingSeconds = positiveSeconds % 60;
         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
     }
 
@@ -196,14 +245,26 @@ const StartWorkout = ({ route }) => {
 
 
     return (
-        <ScrollView style={styles.container}>
-            <View style={styles.timerContainer}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.timerText}>{formatTime(timer)}</Text>
-                <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-                    <Text>Back</Text>
-                </TouchableOpacity>
-            </View>
+        <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+            <SafeAreaView style={styles.safeArea}>
+                <View style={styles.stickyHeader}>
+                    <View style={styles.titleContainer}>
+                        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+                            <Ionicons name='md-arrow-back' size={24} color='red' />
+                        </TouchableOpacity>
+
+                        <Text style={styles.title}>{title}</Text>
+
+                        <TouchableOpacity onPress={togglePause} style={styles.timerContainer}>
+                            <Text style={styles.timerText}>{formatTime(timer)}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    {/* 
+                    <View >
+
+                    </View> */}
+                </View>
+            </SafeAreaView>
             {exercises && exercises.map((exercise, exerciseIndex) => (
                 <View key={exerciseIndex} style={styles.exerciseContainer}>
                     <Text style={styles.exerciseTitle}>{exercise.title}</Text>
@@ -274,6 +335,7 @@ const StartWorkout = ({ route }) => {
                     <Text style={styles.saveBtnTxt}>Save Workout</Text>
                 </TouchableOpacity>
             </View>
+
         </ScrollView>
     );
 };
@@ -286,25 +348,47 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 20,
     },
+    stickyHeader: {
+        backgroundColor: 'white',
+
+    },
+    safeArea: {
+        flex: 0,
+        backgroundColor: 'white',
+    },
     container: {
-        flexGrow: 1,
+        flexGrow: 0,
         padding: 20,
+        paddingTop: 0,
+        backgroundColor: 'white',
+
     },
     title: {
         fontSize: 25,
         fontWeight: '700',
         marginBottom: 20,
-        marginTop: 25
+        paddingTop: 10,
+        marginLeft: 50,
+        marginTop: 25,
+        textAlign: 'center',
+
+
     },
     timerContainer: {
-        flexDirection: 'row',
-
+        backgroundColor: 'black',
+        borderRadius: 15,
+        width: '20%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 15
     },
     timerText: {
         fontSize: 18,
         fontWeight: '600',
-        marginTop: 30,
-        marginLeft: 15
+        color: 'white',
+        textAlign: 'center',
+
+
     },
     exerciseContainer: {
         marginBottom: 20,
@@ -326,6 +410,13 @@ const styles = StyleSheet.create({
         fontWeight: '700'
     },
 
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        width: '100%',
+    },
     setContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -373,15 +464,11 @@ const styles = StyleSheet.create({
         color: 'white'
     },
     backBtn: {
-        alignSelf: 'center',
-        width: '30%',
-        backgroundColor: '#dc143c',
-        borderRadius: 10,
-        height: 30,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 10,
-        marginLeft: 120
+        marginTop: 25
+
+
+
+
     }
 
 });

@@ -14,8 +14,10 @@ const WorkoutDetail = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedWorkout, setSelectedWorkout] = useState(null);
     const navigation = useNavigation();
+    // timer
 
-
+    const [timer, setTimer] = useState(0);
+    const [startTimer, setStartTimer] = useState(true);
 
     const openModal = (workout) => {
 
@@ -30,9 +32,12 @@ const WorkoutDetail = () => {
 
     const startWorkout = () => {
         setModalVisible(false);
+        setTimer(0);
+        setStartTimer(true);
         navigation.navigate('StartWorkout', {
             selectedWorkout,
-            selectedSplitId
+            selectedSplitId,
+            startTimer
         });
     };
 
@@ -69,6 +74,9 @@ const WorkoutDetail = () => {
                     </View>
                 </View>
             </Modal>
+            <View style={styles.footer}>
+
+            </View>
         </ScrollView>
     )
 }
@@ -85,13 +93,14 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         padding: 40,
         paddingTop: 50,
-        paddingBottom: 50,
+        paddingBottom: 300,
 
     },
     title: {
         fontSize: 25,
         fontWeight: '700',
         textAlign: 'center',
+        marginTop: 10,
         paddingBottom: 10
     },
     cardContainer: {
@@ -139,6 +148,10 @@ const styles = StyleSheet.create({
         marginTop: 30,
         marginBottom: 10
     },
+
+    footer: {
+        height: 70,
+    }
 });
 
 export default WorkoutDetail;

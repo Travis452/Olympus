@@ -30,7 +30,7 @@ const HomeScreen = () => {
             <Splits />
 
 
-
+            <View style={styles.footer}></View>
         </SafeAreaView>
     );
 };
@@ -90,6 +90,10 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 10,
     },
+
+    footer: {
+        height: 70
+    }
 });
 
 export default HomeScreen;
