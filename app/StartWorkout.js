@@ -259,10 +259,7 @@ const StartWorkout = ({ route }) => {
                             <Text style={styles.timerText}>{formatTime(timer)}</Text>
                         </TouchableOpacity>
                     </View>
-                    {/* 
-                    <View >
 
-                    </View> */}
                 </View>
             </SafeAreaView>
             {exercises && exercises.map((exercise, exerciseIndex) => (
@@ -272,6 +269,9 @@ const StartWorkout = ({ route }) => {
                     <View style={styles.headerContainer}>
                         <View style={styles.setColumn}>
                             <Text style={styles.headerText}>Set</Text>
+                        </View>
+                        <View style={styles.setColumn}>
+                            <Text style={styles.headerText}>Prev</Text>
                         </View>
                         <View style={styles.setColumn}>
                             <Text style={styles.headerText}>lbs</Text>
@@ -407,7 +407,8 @@ const styles = StyleSheet.create({
     },
 
     headerText: {
-        fontWeight: '700'
+        fontWeight: '700',
+        textAlign: 'center'
     },
 
     titleContainer: {
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 7,
         backgroundColor: 'lightGrey',
-        width: '30%',
+        width: '20%',
         height: 40,
 
     },
@@ -446,9 +447,10 @@ const styles = StyleSheet.create({
     },
     setss: {
         backgroundColor: 'lightgrey',
-        width: '20%',
+        width: '50%',
         borderRadius: 5,
         alignItems: 'center',
+
     },
     saveButton: {
         alignSelf: 'center',
