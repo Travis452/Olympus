@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { incrementTimer, resetTimer, setTimer } from '../src/redux/actions/timerActions'
 import { View, Text, TextInput, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native'
-import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase'
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
@@ -54,9 +54,15 @@ const StartWorkout = ({ route }) => {
 
     const handleAddSet = (exerciseIndex) => {
         const newSetInputs = [...setInputs];
-        newSetInputs[exerciseIndex].push({ lbs: '', reps: '' })
-        setSetInputs(newSetInputs);
+        if (newSetInputs[exerciseIndex]) {
+            newSetInputs[exerciseIndex].push({ lbs: '', reps: '' })
+            setSetInputs(newSetInputs);
+            console.log('New Set Inputs:', newSetInputs);
+        } else {
+            console.log('Invalid exercise index');
+        }
     }
+
 
     //State for workout Timer
     const dispatch = useDispatch();
@@ -289,6 +295,7 @@ const StartWorkout = ({ route }) => {
                                         {setIndex + 1}
                                     </Text>
                                 </TouchableOpacity>
+
                             </View>
 
                             <TextInput
@@ -327,6 +334,13 @@ const StartWorkout = ({ route }) => {
                         </View>
                     ))}
 
+                    <TouchableOpacity
+                        onPress={() => handleAddSet(exercises.length - 1)}
+                        style={styles.addButton}
+                    >
+                        <Text style={styles.addButtonText}>Add Set</Text>
+                    </TouchableOpacity>
+
                 </View>
 
             ))}
@@ -343,6 +357,20 @@ const StartWorkout = ({ route }) => {
 
 
 const styles = StyleSheet.create({
+
+    addButton: {
+        backgroundColor: '#dc143c',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+
+    addButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+
     buttonContainer: {
         alignItems: 'center',
         marginTop: 20,
