@@ -53,14 +53,15 @@ const StartWorkout = ({ route }) => {
 
 
     const handleAddSet = (exerciseIndex) => {
-        const newSetInputs = [...setInputs];
-        if (newSetInputs[exerciseIndex]) {
-            newSetInputs[exerciseIndex].push({ lbs: '', reps: '' })
-            setSetInputs(newSetInputs);
-            console.log('New Set Inputs:', newSetInputs);
-        } else {
-            console.log('Invalid exercise index');
-        }
+        const newSetInputs = setInputs.map((sets, index) => {
+            if (index === exerciseIndex) {
+                return [...sets, { lbs: '', reps: '' }];
+            }
+            return sets;
+        })
+
+        setSetInputs(newSetInputs);
+        console.log('New Set Inputs', newSetInputs);
     }
 
 
@@ -287,8 +288,8 @@ const StartWorkout = ({ route }) => {
                         </View>
                     </View>
 
-                    {Array(exercise.sets).fill().map((_, setIndex) => (
-                        <View key={setIndex} style={styles.setContainer}>
+                    {setInputs[exerciseIndex].map((set, setIndex) => (
+                        <View key={`${exerciseIndex}-${setIndex}`} style={styles.setContainer}>
                             <View style={styles.setColumn}>
                                 <TouchableOpacity style={styles.setss}>
                                     <Text>
@@ -314,6 +315,8 @@ const StartWorkout = ({ route }) => {
                                 }
                             />
 
+
+
                             <TextInput
                                 style={styles.input}
                                 placeholder='lbs'
@@ -335,7 +338,7 @@ const StartWorkout = ({ route }) => {
                     ))}
 
                     <TouchableOpacity
-                        onPress={() => handleAddSet(exercises.length - 1)}
+                        onPress={() => handleAddSet(exerciseIndex)}
                         style={styles.addButton}
                     >
                         <Text style={styles.addButtonText}>Add Set</Text>
