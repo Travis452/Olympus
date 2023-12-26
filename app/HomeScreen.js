@@ -21,7 +21,13 @@ const HomeScreen = () => {
                 </View>
                 <View style={styles.titleContainer}>
                     <Text style={styles.smTitle}>Custom Workouts</Text>
+
                     <Text style={styles.text}> My Custom Workouts </Text>
+                    <View style={styles.customBtnView}>
+                        <TouchableOpacity style={styles.customButton}>
+                            <Text style={styles.customBtnTxt}>New Workout</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 <View style={styles.titleContainer}>
                     <Text style={styles.smTitle}>Example Workouts</Text>
@@ -44,6 +50,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
+    },
+    customButton: {
+
+        backgroundColor: '#dc143c',
+        borderRadius: 20,
+        width: '20%',
+        alignItems: 'center',
+        textAlign: 'center',
+        height: 70,
+        marginTop: 20
+
     },
     title: {
         textAlignVertical: 'top',
@@ -72,12 +89,28 @@ const styles = StyleSheet.create({
         color: 'white',
     },
 
+    customBtnTxt: {
+
+        color: 'white',
+        fontWeight: '700',
+        marginTop: 15,
+    },
+
     btnView: {
         width: '100%',
         height: 50,
         marginBottom: 20,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    customBtnView: {
+        width: '100%',
+        height: 50,
+        marginBottom: 20,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        marginLeft: 20
     },
 
     randomBtn: {
