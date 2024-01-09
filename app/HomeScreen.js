@@ -1,10 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import Splits from '../components/Splits';
 
-const HomeScreen = () => {
 
+const HomeScreen = () => {
+    const navigation = useNavigation();
+
+    const onPress = () => {
+        navigation.navigate('CustomWorkout');
+    }
 
     return (
         <SafeAreaView>
@@ -24,7 +30,7 @@ const HomeScreen = () => {
 
                     <Text style={styles.text}> My Custom Workouts </Text>
                     <View style={styles.customBtnView}>
-                        <TouchableOpacity style={styles.customButton}>
+                        <TouchableOpacity style={styles.customButton} onPress={onPress}>
                             <Text style={styles.customBtnTxt}>New Workout</Text>
                         </TouchableOpacity>
                     </View>
@@ -59,7 +65,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         textAlign: 'center',
         height: 70,
-        marginTop: 20
+        marginTop: 60,
+        marginBottom: 40
 
     },
     title: {

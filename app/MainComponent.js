@@ -5,6 +5,7 @@ import CreateAccount from './CreateAccount';
 import Login from './Login';
 import Profile from './Profile';
 import StartWorkout from './StartWorkout';
+import CustomWorkout from './CustomWorkout';
 import Exercises from './Exercises';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -180,6 +181,18 @@ const Main = () => {
                     <Tab.Screen
                         name='StartWorkout'
                         component={StartWorkout}
+                        options={{
+                            tabBarStyle: { display: 'none' },
+                            tabBarItemStyle: { display: 'none' },
+                            headerShown: false,
+                            href: null
+                        }}
+                    />
+
+
+                    <Tab.Screen
+                        name='CustomWorkout'
+                        component={CustomWorkout}
                         options={{
                             tabBarStyle: { display: 'none' },
                             tabBarItemStyle: { display: 'none' },
