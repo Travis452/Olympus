@@ -22,7 +22,6 @@ const StartWorkout = ({ route }) => {
 
 
 
-
     const initializeSetInputs = (exercises) => {
         return exercises.map((exercise) =>
             Array(exercise.sets).fill().map(() => ({ lbs: '', reps: '' }))

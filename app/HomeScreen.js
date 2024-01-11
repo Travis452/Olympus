@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Splits from '../components/Splits';
+import { SPLITS } from '../data/SPLITS';
 
 
 const HomeScreen = () => {
@@ -10,6 +11,23 @@ const HomeScreen = () => {
 
     const onPress = () => {
         navigation.navigate('CustomWorkout');
+    }
+
+    const getRandomWorkout = () => {
+        const randomSplit = SPLITS[Math.floor(Math.random() * SPLITS.length)];
+        const randomMuscleGroup = randomSplit.muscles[Math.floor(Math.random() * randomSplit.muscles.length)];
+        return {
+            selectedWorkout: randomMuscleGroup,
+            selectedSplitId: randomSplit.id
+        };
+    }
+
+    const handleRandomWorkout = () => {
+        const { selectedWorkout, selectedSplitId } = getRandomWorkout();
+        navigation.navigate('StartWorkout', {
+            selectedWorkout,
+            selectedSplitId
+        });
     }
 
     return (
@@ -21,7 +39,7 @@ const HomeScreen = () => {
                     <Text style={styles.text}>Quick Start</Text>
                 </View>
                 <View style={styles.btnView}>
-                    <TouchableOpacity style={styles.randomBtn}>
+                    <TouchableOpacity style={styles.randomBtn} onPress={handleRandomWorkout}>
                         <Text style={styles.btnTxt}>Random Workout</Text>
                     </TouchableOpacity>
                 </View>
