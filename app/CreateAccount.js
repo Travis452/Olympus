@@ -10,7 +10,7 @@ const CreateAccount = () => {
 
 
     const navigation = useNavigation();
-    cont[isSignedUp, setIsSignedUp] = useState(false);
+    const [isSignedUp, setIsSignedUp] = useState(false);
 
     const [state, setState] = useState({
         firstName: '',

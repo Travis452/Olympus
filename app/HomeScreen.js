@@ -7,6 +7,7 @@ import { SPLITS } from '../data/SPLITS';
 
 
 const HomeScreen = () => {
+    console.log('Navigated to HomeScreen');
     const navigation = useNavigation();
 
     const onPress = () => {
@@ -56,11 +57,9 @@ const HomeScreen = () => {
                 <View style={styles.titleContainer}>
                     <Text style={styles.smTitle}>Example Workouts</Text>
                 </View>
+                <Splits />
             </ScrollView>
-            <Splits />
 
-
-            <View style={styles.footer}></View>
         </SafeAreaView>
     );
 };
