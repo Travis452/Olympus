@@ -18,22 +18,25 @@ const Login = () => {
     const onPressLogin = async () => {
         try {
             await signInWithEmailAndPassword(auth, state.email, state.password);
+            navigation.navigate('HomeScreen')
         } catch (error) {
             console.error('Login Failed', error.message);
         }
+
+
     }
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                navigation.navigate('HomeScreen');
+                console.log('User is Logged in');
             }
         })
 
         return () => {
             unsubscribe();
         }
-    }, [auth, navigation]);
+    }, [auth]);
 
     const onPressForgotPassword = () => {
 
@@ -124,6 +127,11 @@ const styles = StyleSheet.create({
         marginTop: 40,
         marginBottom: 10
     },
+
+    loginText: {
+        color: 'white',
+    },
+
 })
 
 export default Login

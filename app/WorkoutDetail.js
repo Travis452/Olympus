@@ -14,8 +14,8 @@ const WorkoutDetail = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedWorkout, setSelectedWorkout] = useState(null);
     const navigation = useNavigation();
-    // timer
 
+    // timer
     const [timer, setTimer] = useState(0);
     const [startTimer, setStartTimer] = useState(true);
 
@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'white'
     },
     buttonContainer: {
-        flexDirection: 'row', // Make children appear horizontally
-        justifyContent: 'space-between', // Add space between the two buttons
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         width: '100%',
         marginTop: 10,
     },

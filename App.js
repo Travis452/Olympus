@@ -1,33 +1,33 @@
-import { useState, useEffect } from 'react'
-import Main from './app/MainComponent';
-import * as React from 'react';
+// App.js
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'firebase/auth';
-import store from './src/redux/store.js';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Provider } from 'react-redux';
-import { StatusBar } from 'react-native';
+import store from './src/redux/store.js';
+import MainStackNavigator from './app/MainStackNavigator';
 import AuthNavigation from './app/AuthNavigation';
-import { View, ActivityIndicator } from 'react-native';
-const App = () => {
+import useAuth from './hooks/useAuth';
 
-    const auth = getAuth();
+const App = () => {
+    const { user, isLoading } = useAuth();
     const [currentUser, setCurrentUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setPersistence(auth, browserLocalPersistence)
-            .catch((error) => {
-                console.error('Error setting up Firebase Persistence', error.message)
-            });
+        if (user) {
+            console.log('User is logged in:', user);
+        } else {
+            console.log('No user is logged in');
+        }
+    }, [user]);
 
+    useEffect(() => {
+        const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-
             setCurrentUser(user);
-            setIsLoading(false);
         });
-
         return unsubscribe;
-
     }, []);
 
     if (isLoading) {
@@ -37,18 +37,15 @@ const App = () => {
             </View>
         );
     }
+
     return (
         <Provider store={store}>
             <StatusBar barStyle='dark-content' />
-
             <NavigationContainer>
-                {currentUser ? <Main currentUser={currentUser} /> : <AuthNavigation />}
+                {currentUser ? <MainStackNavigator /> : <AuthNavigation />}
             </NavigationContainer>
-
         </Provider>
     );
 };
-
-
 
 export default App;

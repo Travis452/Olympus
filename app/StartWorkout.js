@@ -14,25 +14,30 @@ const StartWorkout = ({ route }) => {
 
     const navigation = useNavigation();
     const { selectedWorkout, selectedSplitId } = route.params;
-
-
-    const { exercises, title } = selectedWorkout
-
-
+    const { exercises = [], title } = selectedWorkout
 
 
 
     const initializeSetInputs = (exercises) => {
+
+        if (!Array.isArray(exercises)) {
+            return []
+        }
+
         return exercises.map((exercise) =>
             Array(exercise.sets).fill().map(() => ({ lbs: '', reps: '' }))
         );
     }
 
+    useEffect(() => {
+        console.log("Selected Workout:", selectedWorkout);
+        console.log("Exercises:", exercises);
+    }, [selectedWorkout, exercises])
 
     //Going back to previous page.
     const handleBack = () => {
         dispatch(setTimer(-2));
-        navigation.navigate('WorkoutDetail', { selectedSplitId });
+        navigation.navigate('HomeScreen');
     }
 
 
@@ -45,10 +50,10 @@ const StartWorkout = ({ route }) => {
     //inputting the sets data 
 
 
-    const sets = exercises.length > 0 ? exercises[0].sets : 0;
+    // const sets = exercises.length > 0 ? exercises[0].sets : 0;
     const initialSetInputs = initializeSetInputs(exercises);
     const [setInputs, setSetInputs] = useState(initialSetInputs)
-
+    const [previousData, setPreviousData] = useState([]);
 
 
     const handleAddSet = (exerciseIndex) => {
@@ -164,9 +169,7 @@ const StartWorkout = ({ route }) => {
         }
         fetchData();
     }, [currentUser, selectedWorkout.id]);
-    const [previousData, setPreviousData] = useState([]);
 
-    // console.log('Render Previous Data:', previousData);
 
     //Save workout data to firebase
     const saveWorkoutData = async () => {
@@ -232,14 +235,26 @@ const StartWorkout = ({ route }) => {
                                 exerciseTitle: exercise.title,
                                 sets: previousSetData,
                             });
+                        } else {
+                            previousData.push({
+                                exerciseTitle: exercise.title,
+                                sets: [],
+                            });
                         }
                     });
 
 
-                };
+                } else {
+                    exercises.forEach((exercise) => {
+                        previousData.push({
+                            exerciseTitle: exercise.title,
+                            sets: [],
+                        })
+                    })
+                }
 
                 setPreviousData(previousData);
-                console.log('Fetched Data', previousData)
+                console.log('Fetched Data', previousData);
             }
         } catch (error) {
             console.error('Error fetching previous data:', error);
@@ -256,7 +271,7 @@ const StartWorkout = ({ route }) => {
                 <View style={styles.stickyHeader}>
                     <View style={styles.titleContainer}>
                         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-                            <Ionicons name='md-arrow-back' size={24} color='red' />
+                            <Ionicons name='arrow-back' size={24} color='red' />
                         </TouchableOpacity>
 
                         <Text style={styles.title}>{title}</Text>
@@ -287,7 +302,7 @@ const StartWorkout = ({ route }) => {
                         </View>
                     </View>
 
-                    {setInputs[exerciseIndex].map((set, setIndex) => (
+                    {setInputs[exerciseIndex] && setInputs[exerciseIndex].map((set, setIndex) => (
                         <View key={`${exerciseIndex}-${setIndex}`} style={styles.setContainer}>
                             <View style={styles.setColumn}>
                                 <TouchableOpacity style={styles.setss}>
@@ -303,14 +318,12 @@ const StartWorkout = ({ route }) => {
                                 editable={false}
                                 style={styles.input}
                                 value={
-                                    previousData.length > 0
-                                        && previousData[exerciseIndex]
-                                        && previousData[exerciseIndex].sets
-                                        && previousData[exerciseIndex].sets[setIndex]
-                                        && previousData[exerciseIndex].sets[setIndex].lbs
+                                    previousData[exerciseIndex] &&
+                                        previousData[exerciseIndex].sets &&
+                                        previousData[exerciseIndex].sets[setIndex] &&
+                                        previousData[exerciseIndex].sets[setIndex].lbs
                                         ? `${previousData[exerciseIndex].sets[setIndex].lbs} lbs`
                                         : ''
-
                                 }
                             />
 
@@ -320,21 +333,23 @@ const StartWorkout = ({ route }) => {
                                 style={styles.input}
                                 placeholder='lbs'
                                 keyboardType='numeric'
-                                value={setInputs[exerciseIndex] && setInputs[exerciseIndex][setIndex]
-                                    ? setInputs[exerciseIndex][setIndex].lbs : ''}
+                                value={set.lbs}
                                 onChangeText={(value) => handleInputChange(exerciseIndex, setIndex, 'lbs', value)}
                             />
                             <TextInput
                                 style={styles.input}
                                 placeholder='Reps'
                                 keyboardType='numeric'
-                                value={setInputs[exerciseIndex] && setInputs[exerciseIndex][setIndex]
-                                    ? setInputs[exerciseIndex][setIndex].reps : ''}
+                                value={set.reps}
                                 onChangeText={(value) => handleInputChange(exerciseIndex, setIndex, 'reps', value)}
                             />
 
                         </View>
+
+
                     ))}
+
+
 
                     <TouchableOpacity
                         onPress={() => handleAddSet(exerciseIndex)}

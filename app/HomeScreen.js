@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Splits from '../components/Splits';
@@ -18,7 +18,10 @@ const HomeScreen = () => {
         const randomSplit = SPLITS[Math.floor(Math.random() * SPLITS.length)];
         const randomMuscleGroup = randomSplit.muscles[Math.floor(Math.random() * randomSplit.muscles.length)];
         return {
-            selectedWorkout: randomMuscleGroup,
+            selectedWorkout: {
+                ...randomMuscleGroup,
+                exercises: randomMuscleGroup.exercises || []
+            },
             selectedSplitId: randomSplit.id
         };
     }
@@ -31,10 +34,60 @@ const HomeScreen = () => {
         });
     }
 
+    const renderItem = ({ item }) => {
+        if (item.type === 'static') {
+            return item.component;
+        } else if (item.type === 'splits') {
+            return <Splits />;
+        }
+    };
+
+    const data = [
+        { type: 'static', component: <Text style={styles.title}>Start Workout</Text> },
+        { type: 'static', component: <View><Text style={styles.text}>Quick Start</Text></View> },
+        {
+            type: 'static', component: (
+                <View style={styles.btnView}>
+                    <TouchableOpacity style={styles.randomBtn} onPress={handleRandomWorkout}>
+                        <Text style={styles.btnTxt}>Random Workout</Text>
+                    </TouchableOpacity>
+                </View>
+            )
+        },
+        {
+            type: 'static', component: (
+                <View style={styles.titleContainer}>
+                    <Text style={styles.smTitle}>Custom Workouts</Text>
+                    <Text style={styles.text}>My Custom Workouts</Text>
+                    <View style={styles.customBtnView}>
+                        <TouchableOpacity style={styles.customButton} onPress={onPress}>
+                            <Text style={styles.customBtnTxt}>New Workout</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )
+        },
+        {
+            type: 'static', component: (
+                <View style={styles.titleContainer}>
+                    <Text style={styles.smTitle}>Example Workouts</Text>
+                </View>
+            )
+        },
+        { type: 'splits' }
+    ];
+
     return (
         <SafeAreaView>
 
-            <ScrollView>
+            <FlatList
+                data={data}
+                renderItem={renderItem}
+                keyExtractor={(item, index) => index.toString()}
+            />
+
+
+            {/* <ScrollView>
                 <Text style={styles.title}>Start Workout</Text>
                 <View>
                     <Text style={styles.text}>Quick Start</Text>
@@ -58,7 +111,7 @@ const HomeScreen = () => {
                     <Text style={styles.smTitle}>Example Workouts</Text>
                 </View>
                 <Splits />
-            </ScrollView>
+            </ScrollView> */}
 
         </SafeAreaView>
     );

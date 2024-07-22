@@ -1,56 +1,36 @@
-
+// CreateAccount.js
 import { useState } from 'react';
-import { StyleSheet, SafeAreaView, ScrollView, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, SafeAreaView, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
-
 const CreateAccount = () => {
-
-
     const navigation = useNavigation();
-    const [isSignedUp, setIsSignedUp] = useState(false);
-
     const [state, setState] = useState({
         firstName: '',
         lastName: '',
         email: '',
         password: '',
-    })
-
-
+    });
 
     const handleSubmit = async () => {
         const { email, password } = state;
 
         try {
-
             if (email && password) {
-
-                await createUserWithEmailAndPassword(auth, email, password)
-
-                navigation.navigate('HomeScreen');
+                await createUserWithEmailAndPassword(auth, email, password);
+                console.log('User created, navigating to HomeScreen');
+                navigation.navigate('MainTabs'); // Correct navigation target
+                console.log('Navigation action dispatched');
             }
         } catch (err) {
             console.log('got error:', err.message);
-        };
-
-        if (isSignedUp) {
-            navigation.navigate('HomeScreen');
-            return null;
         }
-    }
-
-
-
-
-
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-
-
             <Text style={styles.title}>Create Account</Text>
             <View style={styles.inputView}>
                 <TextInput
@@ -82,7 +62,6 @@ const CreateAccount = () => {
             <View style={styles.inputView}>
                 <TextInput
                     style={styles.inputText}
-
                     placeholder='Create Password'
                     placeholderTextColor="white"
                     value={state.password}
@@ -94,22 +73,16 @@ const CreateAccount = () => {
                 style={styles.loginBtn}>
                 <Text style={styles.loginText}>Sign Up</Text>
             </TouchableOpacity>
-
         </SafeAreaView>
-    )
-
-}
-
-
-
-
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backGroundColor: '#4FD3DA'
+        backgroundColor: '#4FD3DA'
     },
     title: {
         fontSize: 25,
@@ -129,10 +102,6 @@ const styles = StyleSheet.create({
         height: 50,
         color: 'white'
     },
-    forgotAndSignUpText: {
-        color: 'black',
-        fontSize: 11
-    },
     loginBtn: {
         width: '80%',
         backgroundColor: '#dc143c',
@@ -146,6 +115,6 @@ const styles = StyleSheet.create({
     loginText: {
         color: 'white',
     }
-
 });
+
 export default CreateAccount;

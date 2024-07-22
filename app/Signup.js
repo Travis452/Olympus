@@ -1,17 +1,18 @@
 import { StyleSheet, Text, TouchableOpacity, ImageBackground, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
+import useAuth from '../hooks/useAuth';
 
 
 const Signup = () => {
     const navigation = useNavigation();
-    const [isSignedUp, setIsSignedUp] = useState(false);
+    const { user } = useAuth(navigation);
 
     useEffect(() => {
-        if (isSignedUp) {
+        if (user) {
             navigation.navigate('HomeScreen');
         }
-    })
+    }, [user]);
 
 
     const onPressSignUp = () => {
