@@ -1,11 +1,14 @@
 // CreateAccount.js
 import { useState } from 'react';
+import {useDispatch} from 'react-redux';
 import { StyleSheet, SafeAreaView, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import {setUser} from '../src/redux/userSlice';
 
 const CreateAccount = () => {
+    const dispatch = useDispatch();
     const navigation = useNavigation();
     const [state, setState] = useState({
         firstName: '',
@@ -15,13 +18,14 @@ const CreateAccount = () => {
     });
 
     const handleSubmit = async () => {
-        const { email, password } = state;
+        const { firstName, lastName, email, password } = state;
 
         try {
             if (email && password) {
                 await createUserWithEmailAndPassword(auth, email, password);
-                console.log('User created, navigating to HomeScreen');
-                navigation.navigate('MainTabs'); // Correct navigation target
+                console.log('User created, navigating to MainTabs with firstName:', firstName);
+                dispatch(setUser({firstName, lastName, email}));
+                navigation.navigate('MainTabs', {firstName}); 
                 console.log('Navigation action dispatched');
             }
         } catch (err) {

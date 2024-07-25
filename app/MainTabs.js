@@ -7,7 +7,10 @@ import Profile from './Profile';
 
 const Tab = createBottomTabNavigator();
 
-const MainTabs = () => {
+const MainTabs = ({route}) => {
+const {firstName} = route.params || {};
+console.log('MainTabs received firstName' , firstName)
+
     return (
         <Tab.Navigator initialRouteName="HomeScreen">
             <Tab.Screen
@@ -21,6 +24,7 @@ const MainTabs = () => {
             <Tab.Screen
                 name="Profile"
                 component={Profile}
+                initialParams={{firstName}}
                 options={{
                     headerShown: false,
                     tabBarIcon: () => (<MaterialCommunityIcons name='account' size={26} />)

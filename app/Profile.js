@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
 const Profile = () => {
+    const firstName = useSelector((state) => state.user.firstName);
+
+
     return (
         <ScrollView style={styles.container}>
             <SafeAreaView styles={styles.safeArea}>
@@ -15,7 +18,7 @@ const Profile = () => {
                         style={styles.image}
                         resizeMode={'cover'} />
 
-                    <Text style={styles.username}> Username </Text>
+                    <Text style={styles.username}> {firstName} </Text>
                 </View>
             </SafeAreaView>
         </ScrollView>
@@ -37,7 +40,8 @@ const styles = StyleSheet.create({
         height: 50,
         borderWidth: 1,
         borderRadius: 75,
-        marginTop: 20
+        marginTop: 20,
+        backgroundColor: 'lightgrey'
     },
 
     title: {
@@ -45,7 +49,9 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         fontSize: 35,
         fontWeight: '700',
-        margin: 20,
+        margin: 15,
+        marginTop: 40,
+        marginLeft: 5
     },
     safeArea: {
         flex: 0,
@@ -58,7 +64,9 @@ const styles = StyleSheet.create({
 
     username: {
         marginTop: 30,
-        marginLeft: 15
+        marginLeft: 15,
+        fontSize: 20,
+        fontWeight: '600'
     }
 })
 export default Profile;

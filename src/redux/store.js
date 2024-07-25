@@ -1,4 +1,5 @@
-import { createStore } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
+import userReducer from './userSlice';
 
 const timerReducer = (state = 0, action) => {
     switch (action.type) {
@@ -13,6 +14,11 @@ const timerReducer = (state = 0, action) => {
     }
 };
 
-const store = createStore(timerReducer);
+const store = configureStore({
+    reducer: {
+        timer: timerReducer,
+        user: userReducer,
+    },
+});
 
 export default store;
