@@ -9,7 +9,7 @@ const Tab = createBottomTabNavigator();
 
 const MainTabs = ({route}) => {
 const {firstName} = route.params || {};
-console.log('MainTabs received firstName' , firstName)
+
 
     return (
         <Tab.Navigator initialRouteName="HomeScreen">

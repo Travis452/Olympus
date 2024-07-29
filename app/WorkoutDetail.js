@@ -3,6 +3,7 @@ import { SPLITS } from '../data/SPLITS';
 import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Card } from '@rneui/base';
 import { useRoute, useNavigation } from '@react-navigation/native'
+import BackButton from '../components/BackButton';
 
 
 
@@ -43,7 +44,10 @@ const WorkoutDetail = () => {
 
     return (
         <ScrollView style={styles.container}>
+            <View style={styles.header}>
+            <BackButton destination = 'HomeScreen' />
             <Text style={styles.title}>{selectedSplit?.title}</Text>
+            </View>
             {selectedSplit?.muscles.map((muscle) => (
                 <TouchableOpacity
                     key={muscle.id}
@@ -96,12 +100,18 @@ const styles = StyleSheet.create({
         paddingBottom: 300,
 
     },
+
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 10,
+    },
     title: {
         fontSize: 25,
         fontWeight: '700',
         textAlign: 'center',
-        marginTop: 10,
-        paddingBottom: 10
+        flex: 0.9
     },
     cardContainer: {
         borderRadius: 10,

@@ -6,6 +6,7 @@ const userSlice = createSlice({
         firstName: '',
         lastName: '',
         email: '',
+        completedWorkouts: 0,
     },
 
     reducers: {
@@ -13,11 +14,13 @@ const userSlice = createSlice({
             state.firstName = action.payload.firstName;
             state.lastName = action.payload.lastName;
             state.email = action.payload.email;
+            state.completedWorkouts = action.payload.completedWorkouts;
         },
         clearUser(state) {
             state.firstName = '';
             state.lastName = '';
             state.email = '';
+            state.completedWorkouts = 0;
         },
     },
 });

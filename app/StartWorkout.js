@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { incrementTimer, resetTimer, setTimer } from '../src/redux/actions/timerActions'
+import { incrementTimer, resetTimer, setTimer } from '../src/redux/timerReducer';
 import { View, Text, TextInput, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native'
-import { collection, addDoc, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, getDoc, setDoc, doc, getDocs, query, where, limit, orderBy, increment } from 'firebase/firestore';
 import { db } from '../config/firebase'
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import BackButton from '../components/BackButton'
 
 
 
@@ -33,13 +34,6 @@ const StartWorkout = ({ route }) => {
         console.log("Selected Workout:", selectedWorkout);
         console.log("Exercises:", exercises);
     }, [selectedWorkout, exercises])
-
-    //Going back to previous page.
-    const handleBack = () => {
-        dispatch(setTimer(-2));
-        navigation.navigate('HomeScreen');
-    }
-
 
 
     //Getting authentication 
@@ -71,7 +65,7 @@ const StartWorkout = ({ route }) => {
 
     //State for workout Timer
     const dispatch = useDispatch();
-    const timer = useSelector(state => state);
+    const timer = useSelector(state => state.timer.seconds);
     const [isPaused, setIsPaused] = useState(false);
     const [timerInterval, setTimerInterval] = useState(null);
 
@@ -193,7 +187,26 @@ const StartWorkout = ({ route }) => {
                 };
 
                 const docRef = await addDoc(collection(db, 'workouts'), workoutData)
-                console.log('Workout data added with ID', docRef.id);
+               console.log('Workout data added with ID', docRef.id);
+
+               const userRef = doc(db, 'users', currentUser.uid);
+               const userDoc = await getDoc(userRef);
+
+               if (userDoc.exists()) {
+
+                await updateDoc(userRef, {
+                 completedWorkouts: increment(1),
+});
+               } else {
+                await setDoc(userRef, {
+                    firstName: currentUser.displayName.split(' ')[0] || '',
+                    lastName: currentUser.displayName.split(' ')[1] || '',
+                    email: currentUser.email,
+                    completedWorkouts:1,
+                });
+               }
+console.log('Wokrout data added with ID', docRef.id);
+
             } else {
                 console.error('User is not authenticated');
             }
@@ -270,9 +283,7 @@ const StartWorkout = ({ route }) => {
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.stickyHeader}>
                     <View style={styles.titleContainer}>
-                        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-                            <Ionicons name='arrow-back' size={24} color='red' />
-                        </TouchableOpacity>
+                      <BackButton />
 
                         <Text style={styles.title}>{title}</Text>
 
@@ -425,7 +436,8 @@ const styles = StyleSheet.create({
         width: '20%',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 15
+        marginTop: 15,
+        marginLeft: 15
     },
     timerText: {
         fontSize: 18,

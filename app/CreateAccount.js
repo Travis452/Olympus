@@ -1,14 +1,11 @@
-// CreateAccount.js
 import { useState } from 'react';
-import {useDispatch} from 'react-redux';
 import { StyleSheet, SafeAreaView, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../config/firebase';
-import {setUser} from '../src/redux/userSlice';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 
 const CreateAccount = () => {
-    const dispatch = useDispatch();
     const navigation = useNavigation();
     const [state, setState] = useState({
         firstName: '',
@@ -22,11 +19,19 @@ const CreateAccount = () => {
 
         try {
             if (email && password) {
-                await createUserWithEmailAndPassword(auth, email, password);
-                console.log('User created, navigating to MainTabs with firstName:', firstName);
-                dispatch(setUser({firstName, lastName, email}));
-                navigation.navigate('MainTabs', {firstName}); 
-                console.log('Navigation action dispatched');
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Save user details to Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    firstName,
+                    lastName,
+                    email,
+                    completedWorkouts: 0,
+                });
+
+                navigation.navigate('MainTabs', { firstName });
+                console.log('User created and Firestore document set');
             }
         } catch (err) {
             console.log('got error:', err.message);

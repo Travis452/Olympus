@@ -1,24 +1,39 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { persistStore, persistReducer,  
+    FLUSH,
+    REHYDRATE,
+    PAUSE,
+    PERSIST,
+    PURGE,
+    REGISTER,} from 'redux-persist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import userReducer from './userSlice';
+import timerReducer from './timerReducer';
 
-const timerReducer = (state = 0, action) => {
-    switch (action.type) {
-        case 'SET_TIMER':
-            return action.payload;
-        case 'INCREMENT_TIMER':
-            return state + 1;
-        case 'RESET_TIMER':
-            return 0;
-        default:
-            return state;
-    }
-};
 
-const store = configureStore({
-    reducer: {
-        timer: timerReducer,
-        user: userReducer,
-    },
+
+const rootReducer = combineReducers({
+    timer: timerReducer,
+    user: userReducer,
 });
 
+const persistConfig = {
+    key: 'root',
+    storage: AsyncStorage,
+    whitelist: ['user'],
+};
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+const store = configureStore({
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) => 
+        getDefaultMiddleware({
+            serializableCheck: {
+                ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+            },
+        }),
+});
+
+export const persistor = persistStore(store);
 export default store;

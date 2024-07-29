@@ -1,11 +1,10 @@
-// App.js
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Provider } from 'react-redux';
-import store from './src/redux/store.js';
+import { PersistGate } from 'redux-persist/integration/react';
+import store, { persistor } from './src/redux/store'; // Ensure correct path
 import MainStackNavigator from './app/MainStackNavigator';
 import AuthNavigation from './app/AuthNavigation';
 import useAuth from './hooks/useAuth';
@@ -40,10 +39,12 @@ const App = () => {
 
     return (
         <Provider store={store}>
-            <StatusBar barStyle='dark-content' />
-            <NavigationContainer>
-                {currentUser ? <MainStackNavigator /> : <AuthNavigation />}
-            </NavigationContainer>
+            <PersistGate loading={null} persistor={persistor}>
+                <StatusBar barStyle='dark-content' />
+                <NavigationContainer>
+                    {currentUser ? <MainStackNavigator /> : <AuthNavigation />}
+                </NavigationContainer>
+            </PersistGate>
         </Provider>
     );
 };
