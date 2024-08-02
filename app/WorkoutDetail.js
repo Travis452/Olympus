@@ -69,7 +69,7 @@ const WorkoutDetail = () => {
                         <Text>Would you like to start this Workout?</Text>
                         <View style={styles.buttonContainer}>
                             <TouchableOpacity onPress={startWorkout} style={styles.startBtn}>
-                                <Text>Start</Text>
+                                <Text style={styles.btnText}>Start</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={closeModal} style={styles.cancelBtn}>
                                 <Text style={styles.btnText}>Cancel</Text>
