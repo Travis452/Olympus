@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getUserEXP, updateUserEXP } from "../../config/firebase";
+import { LEVELS } from "../../config/levels";
 
 export const fetchUserEXP = createAsyncThunk(
   "user/fetchEXP",
@@ -29,6 +30,18 @@ export const addEXP = createAsyncThunk(
   }
 );
 
+const calculateLevel = (exp) => {
+  let currentLevel = LEVELS[0].name;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (exp >= LEVELS[i].expRequired) {
+      currentLevel = LEVELS[i].name;
+    } else {
+      break;
+    }
+  }
+  return currentLevel;
+};
+
 const userSlice = createSlice({
   name: "user",
   initialState: {
@@ -49,7 +62,7 @@ const userSlice = createSlice({
       state.email = action.payload.email;
       state.completedWorkouts = action.payload.completedWorkouts;
       state.exp = action.payload.exp ?? 0;
-      state.level = action.payload.level ?? 1;
+      state.level = calculateLevel(state.exp);
     },
     clearUser(state) {
       state.firstName = "";
@@ -57,20 +70,20 @@ const userSlice = createSlice({
       state.email = "";
       state.completedWorkouts = 0;
       state.exp = 0;
-      state.level = 1;
+      state.level = LEVELS[0].name;
     },
   },
 
   extraReducers: (builder) => {
     builder
       .addCase(fetchUserEXP.pending, (state) => {
-        state.status = "laoding";
+        state.status = "loading";
       })
 
       .addCase(fetchUserEXP.fulfilled, (state, action) => {
         state.status = "success";
         state.exp = action.payload.exp;
-        state.level = action.payload.level;
+        state.level = calculateLevel(action.payload.exp);
       })
 
       .addCase(fetchUserEXP.rejected, (state, action) => {
@@ -80,7 +93,7 @@ const userSlice = createSlice({
 
       .addCase(addEXP.fulfilled, (state, action) => {
         state.exp = action.payload.exp;
-        state.level = action.payload.level;
+        state.level = calculateLevel(action.payload.exp);
       });
   },
 });

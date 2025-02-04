@@ -13,6 +13,9 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
+
+import { LEVELS } from "./levels";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -75,39 +78,41 @@ export const getUserEXP = async (userId) => {
 
 export const updateUserEXP = async (userId, expToAdd) => {
   try {
-    const userRef = doc(db, "users", UserId);
+    if (!userId) {
+      console.error("UserId is undefined in updateUserEXP");
+      return;
+    }
+
+    const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
 
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-      let newExp = userData.exp + expToAdd;
-      let newLevel = userData.level;
-
-      const levelThresholds = [
-        0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500,
-      ];
-
-      for (let i = 1; i < levelThresholds.length; i++) {
-        if (newExp >= levelThresholds[i]) {
-          newLevel = i + 1;
-        } else {
-          break;
-        }
-      }
-
-      await updateDoc(userRef, {
-        exp: newExp,
-        level: newLevel,
-      });
-
-      console.log(
-        `User ${userId} updated to Level ${newLevel} with ${newExp} EXP`
-      );
-      return { exp: newExp, level: newLevel };
-    } else {
+    if (!userSnap.exists()) {
       console.log("User not found in database");
       return null;
     }
+
+    const userData = userSnap.data();
+    let newExp = (userData.exp || 0) + expToAdd;
+    let newLevel = userData.level || 1;
+
+    // Use LEVELS.js to determine level progression
+    for (let i = 0; i < LEVELS.length; i++) {
+      if (newExp >= LEVELS[i].expRequired) {
+        newLevel = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    await updateDoc(userRef, {
+      exp: newExp,
+      level: newLevel,
+    });
+
+    console.log(
+      `User ${userId} updated to Level ${newLevel} with ${newExp} EXP`
+    );
+    return { exp: newExp, level: newLevel };
   } catch (error) {
     console.error("Error updating EXP:", error);
   }

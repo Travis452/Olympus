@@ -1,7 +1,14 @@
 import { useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchUserEXP } from "../src/redux/userSlice";
+import { fetchUserEXP, addEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useAuth from "../hooks/useAuth";
 
@@ -9,13 +16,19 @@ const Profile = () => {
   const { user, completedWorkouts } = useAuth();
   const dispatch = useDispatch();
 
-  const { exp, level, status } = useSelector((state) => state.user);
+  const { exp, level } = useSelector((state) => state.user);
 
   useEffect(() => {
     if (user) {
       dispatch(fetchUserEXP(user.uid));
     }
   }, [user, dispatch]);
+
+  const handleAddEXP = () => {
+    if (user) {
+      dispatch(addEXP({ userId: user.uid, expToAdd: 100 }));
+    }
+  };
 
   if (!user) {
     return (
@@ -48,6 +61,10 @@ const Profile = () => {
           </View>
           <Text style={styles.expText}>{exp} / 1000 EXP</Text>
         </View>
+
+        <TouchableOpacity style={styles.expButton} onPress={handleAddEXP}>
+          <Text style={styles.expButtonText}>+100 EXP</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </ScrollView>
   );
@@ -125,6 +142,21 @@ const styles = StyleSheet.create({
   expText: {
     marginTop: 5,
     fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  // ✅ Add EXP Button Styles
+  expButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#dc143c",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  expButtonText: {
+    color: "white",
+    fontSize: 18,
     fontWeight: "bold",
   },
 });
