@@ -18,6 +18,7 @@ const {firstName} = route.params || {};
                 component={HomeScreen}
                 options={{
                     headerShown: false,
+                    tabBarLabel: 'Home',
                     tabBarIcon: () => (<MaterialCommunityIcons name='home' size={26} />)
                 }}
             />

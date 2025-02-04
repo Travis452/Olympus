@@ -284,19 +284,17 @@ const StartWorkout = ({ route }) => {
                                 </TouchableOpacity>
                             </View>
 
-                            <TextInput
-                                placeholder='---'
-                                editable={false}
-                                style={styles.input}
-                                value={
-                                    previousData[exerciseIndex] &&
-                                        previousData[exerciseIndex].sets &&
-                                        previousData[exerciseIndex].sets[setIndex] &&
-                                        previousData[exerciseIndex].sets[setIndex].lbs
-                                        ? `${previousData[exerciseIndex].sets[setIndex].lbs} lbs`
-                                        : ''
-                                }
-                            />
+                            <View style={styles.previousColumn}>
+                                    <Text style={styles.previousText}>
+                                        {previousData[exerciseIndex] &&
+                                            previousData[exerciseIndex].sets &&
+                                            previousData[exerciseIndex].sets[setIndex] &&
+                                            previousData[exerciseIndex].sets[setIndex].lbs &&
+                                            previousData[exerciseIndex].sets[setIndex].reps
+                                            ? `${previousData[exerciseIndex].sets[setIndex].lbs} x ${previousData[exerciseIndex].sets[setIndex].reps}`
+                                            : '---'}
+                                    </Text>
+                                </View>
 
                             <TextInput
                                 style={styles.input}
@@ -446,6 +444,20 @@ const styles = StyleSheet.create({
         width: '20%',
         height: 40,
     },
+    previousColumn: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 7,
+        backgroundColor: 'white',
+        width: '25%',
+        height: 40,
+    },
+    previousText: {
+        fontSize: 14,
+        color: 'black',
+        fontWeight: 'bold'
+    },
+
     input: {
         flex: 1,
         marginHorizontal: 5,
