@@ -118,4 +118,19 @@ export const updateUserEXP = async (userId, expToAdd) => {
   }
 };
 
+const STRENGTH_BENCHMARKS = {
+  bench: [225, 275, 315],
+  squat: [225, 315, 405, 495],
+  deadlift: [405, 495, 585],
+};
+
+const getStrengthMultiplier = (liftWeight, bodyWeight) => {
+  const ratio = liftWeight / bodyWeight;
+
+  if (ratio >= 2.5) return 2.0;
+  if (ratio >= 2.0) return 1.5;
+  if (ratio >= 1.5) return 1.2;
+  return 1.0;
+};
+
 export { auth, db };
