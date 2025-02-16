@@ -36,6 +36,8 @@ import { useNavigation } from "@react-navigation/native";
 import BackButton from "../components/BackButton";
 
 const StartWorkout = ({ route }) => {
+  const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
+
   const navigation = useNavigation();
   const { selectedWorkout, selectedSplitId } = route.params;
   const { exercises = [], title } = selectedWorkout;
@@ -161,73 +163,53 @@ const StartWorkout = ({ route }) => {
     setFinishModalVisible(true);
   };
 
+  const [performedExercises, setPerformedExercises] = useState([]);
+
   const saveWorkoutData = async () => {
     setFinishModalVisible(false);
 
     try {
       if (currentUser) {
+        let completedExercises = [];
+
+        exercises.forEach((exercise, exerciseIndex) => {
+          const validSets =
+            setInputs[exerciseIndex]?.filter(
+              (set) => set.lbs !== "" && set.reps !== ""
+            ) || [];
+
+          if (validSets.length > 0) {
+            completedExercises.push({
+              title: exercise.title,
+              sets: validSets,
+            });
+          }
+        });
+
+        if (completedExercises.length === 0) {
+          alert("No exercises were completed. Workout not saved.");
+          return;
+        }
+
         const workoutData = {
           userId: currentUser.uid,
           workoutTitle: title,
-          exercises: exercises.map((exercise, exerciseIndex) => ({
-            title: exercise.title,
-            sets: Array(exercise.sets)
-              .fill()
-              .map((_, setIndex) => ({
-                lbs: setInputs[exerciseIndex][setIndex].lbs,
-                reps: setInputs[exerciseIndex][setIndex].reps,
-              })),
-          })),
+          exercises: completedExercises,
           timestamp: new Date(),
+          duration: timer,
         };
 
         const docRef = await addDoc(collection(db, "workouts"), workoutData);
         console.log("Workout data added with ID", docRef.id);
 
-        const userRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userRef);
-
-        if (userDoc.exists()) {
-          await updateDoc(userRef, {
-            completedWorkouts: increment(1),
-          });
-        } else {
-          await setDoc(userRef, {
-            firstName: currentUser.displayName.split(" ")[0] || "",
-            lastName: currentUser.displayName.split(" ")[1] || "",
-            email: currentUser.email,
-            completedWorkouts: 1,
-          });
-        }
-        console.log("Workout data added with ID", docRef.id);
-
-        //Call awardEXP to process EXP
-
-        const bodyWeight = 175;
-        const isVerified = false;
-
-        const expResult = await awardEXP(
-          currentUser.uid,
-          workoutData.exercises,
-          bodyWeight,
-          isVerified
-        );
-
-        if (expResult.verificationRequired) {
-          alert(
-            "Verification required for benchmark lift! No EXP awarded yet."
-          );
-        } else {
-          dispatch(fetchUserEXP(currentUser.uid));
-          alert(`EXP Awarded: ${expResult.exp}. New Level: ${expResult.level}`);
-        }
+        setPerformedExercises(completedExercises); // Store only completed exercises
+        setWorkoutSummaryVisible(true); // Show the modal
       } else {
         console.error("User is not authenticated");
       }
     } catch (error) {
       console.error("Error adding workout data:", error);
     }
-    navigation.navigate("HomeScreen");
   };
 
   const fetchPreviousWorkout = async () => {
@@ -394,6 +376,45 @@ const StartWorkout = ({ route }) => {
                 <Text style={styles.btnText}> Cancel </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={workoutSummaryVisible}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.summaryTitle}>Workout Summary</Text>
+
+            <ScrollView style={styles.summaryList}>
+              {performedExercises.length > 0 ? (
+                performedExercises.map((exercise, index) => (
+                  <View key={index} style={styles.summaryItem}>
+                    <Text style={styles.summaryText}>{exercise.title}</Text>
+                    {exercise.sets.map((set, setIndex) => (
+                      <Text key={setIndex} style={styles.setText}>
+                        Set {setIndex + 1}: {set.lbs} lbs x {set.reps} reps
+                      </Text>
+                    ))}
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noDataText}>No exercises performed.</Text>
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              onPress={() => {
+                setWorkoutSummaryVisible(false);
+                navigation.navigate("HomeScreen");
+              }}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -580,6 +601,51 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 30,
     marginBottom: 10,
+  },
+
+  //Summary Modal
+
+  summaryTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  summaryList: {
+    maxHeight: 200,
+  },
+  summaryItem: {
+    backgroundColor: "#f4f4f4",
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 5,
+  },
+  summaryText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  setText: {
+    fontSize: 14,
+    color: "#555",
+    marginLeft: 10,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
+  closeButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#dc143c",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 
