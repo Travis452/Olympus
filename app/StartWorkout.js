@@ -232,57 +232,44 @@ const StartWorkout = ({ route }) => {
 
   const fetchPreviousWorkout = async () => {
     try {
-      if (currentUser) {
-        const querySnapshot = await getDocs(
-          query(
-            collection(db, "workouts"),
-            where("userId", "==", currentUser.uid),
-            where("workoutTitle", "==", title),
-            orderBy("timestamp", "desc"),
-            limit(1)
-          )
-        );
-        const previousData = [];
+      if (!currentUser) return;
 
-        if (querySnapshot.size > 0) {
-          const latestWorkout = querySnapshot.docs[0].data();
+      const querySnapshot = await getDocs(
+        query(
+          collection(db, "workouts"),
+          where("userId", "==", currentUser.uid),
+          where("workoutTitle", "==", title),
+          orderBy("timestamp", "desc"),
+          limit(1)
+        )
+      );
 
-          exercises.forEach((exercise) => {
-            const previousExerciseData = latestWorkout.exercises.find(
-              (prevExercise) => prevExercise.title === exercise.title
-            );
-
-            if (previousExerciseData) {
-              const previousSetData = previousExerciseData.sets.map((set) => ({
-                lbs: set.lbs,
-                reps: set.reps,
-              }));
-
-              previousData.push({
-                exerciseTitle: exercise.title,
-                sets: previousSetData,
-              });
-            } else {
-              previousData.push({
-                exerciseTitle: exercise.title,
-                sets: [],
-              });
-            }
-          });
-        } else {
-          exercises.forEach((exercise) => {
-            previousData.push({
-              exerciseTitle: exercise.title,
-              sets: [],
-            });
-          });
-        }
-
-        setPreviousData(previousData);
-        console.log("Fetched Data", previousData);
+      if (querySnapshot.empty) {
+        console.log("No previous workout found.");
+        setPreviousData([]); // Set an empty array instead of breaking
+        return;
       }
+
+      const latestWorkout = querySnapshot.docs[0].data();
+      console.log("Fetched Latest Workout Data:", latestWorkout);
+
+      if (!latestWorkout.exercises || !Array.isArray(latestWorkout.exercises)) {
+        console.error(
+          "Error: No 'exercises' field or invalid format in latestWorkout!"
+        );
+        setPreviousData([]); // Prevent errors by setting a default empty array
+        return;
+      }
+
+      const previousData = latestWorkout.exercises.map((exercise) => ({
+        exerciseTitle: exercise.title || "Unnamed Exercise",
+        sets: exercise.sets || [],
+      }));
+
+      console.log("Processed Previous Data:", previousData);
+      setPreviousData(previousData);
     } catch (error) {
-      console.error("Error fetching previous data:", error);
+      console.error("❌ Error fetching previous workout:", error);
     }
   };
 
