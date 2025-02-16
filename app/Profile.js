@@ -61,10 +61,6 @@ const Profile = () => {
           </View>
           <Text style={styles.expText}>{exp} / 1000 EXP</Text>
         </View>
-
-        <TouchableOpacity style={styles.expButton} onPress={handleAddEXP}>
-          <Text style={styles.expButtonText}>+100 EXP</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     </ScrollView>
   );

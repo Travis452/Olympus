@@ -37,6 +37,8 @@ import BackButton from "../components/BackButton";
 
 const StartWorkout = ({ route }) => {
   const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
+  const [expGained, setExpGained] = useState(0);
+  const [finalExp, setFinalExp] = useState(0);
 
   const navigation = useNavigation();
   const { selectedWorkout, selectedSplitId } = route.params;
@@ -191,6 +193,11 @@ const StartWorkout = ({ route }) => {
           return;
         }
 
+        // Fetch user's previous EXP
+        const userRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
+
         const workoutData = {
           userId: currentUser.uid,
           workoutTitle: title,
@@ -202,8 +209,28 @@ const StartWorkout = ({ route }) => {
         const docRef = await addDoc(collection(db, "workouts"), workoutData);
         console.log("Workout data added with ID", docRef.id);
 
-        setPerformedExercises(completedExercises); // Store only completed exercises
-        setWorkoutSummaryVisible(true); // Show the modal
+        // Award EXP for this workout
+        const bodyWeight = 175;
+        const isVerified = false;
+        const expResult = await awardEXP(
+          currentUser.uid,
+          workoutData.exercises,
+          bodyWeight,
+          isVerified
+        );
+
+        if (expResult) {
+          const newEXP = expResult.exp; // Total EXP after awarding
+          const expEarned = newEXP - previousEXP; // Calculate EXP gained from this workout
+
+          setExpGained(expEarned); // Store the EXP gained for display
+          setFinalExp(newEXP); // Update final EXP
+
+          setPerformedExercises(completedExercises);
+          setWorkoutSummaryVisible(true);
+        } else {
+          console.error("EXP calculation failed.");
+        }
       } else {
         console.error("User is not authenticated");
       }
@@ -405,6 +432,15 @@ const StartWorkout = ({ route }) => {
                 <Text style={styles.noDataText}>No exercises performed.</Text>
               )}
             </ScrollView>
+
+            <Text style={styles.expText}>EXP Gained: +{expGained}</Text>
+
+            <View style={styles.expBarContainer}>
+              <View
+                style={[styles.expBar, { width: `${(finalExp % 1000) / 10}%` }]}
+              />
+            </View>
+            <Text style={styles.expBarText}>{finalExp} / 1000 EXP</Text>
 
             <TouchableOpacity
               onPress={() => {
@@ -634,6 +670,35 @@ const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
   },
+  expText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#dc143c",
+    marginVertical: 10,
+  },
+
+  expBarContainer: {
+    width: "80%",
+    height: 10,
+    backgroundColor: "#ccc",
+    borderRadius: 5,
+    overflow: "hidden",
+    marginTop: 10,
+    alignSelf: "center",
+  },
+
+  expBar: {
+    height: "100%",
+    backgroundColor: "#dc143c",
+  },
+
+  expBarText: {
+    marginTop: 5,
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
   closeButton: {
     marginTop: 20,
     paddingVertical: 10,
