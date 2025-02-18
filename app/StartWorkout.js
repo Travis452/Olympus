@@ -6,6 +6,8 @@ import {
   setTimer,
 } from "../src/redux/timerReducer";
 import {
+  Animated,
+  Easing,
   View,
   Text,
   TextInput,
@@ -36,11 +38,24 @@ import { useNavigation } from "@react-navigation/native";
 import BackButton from "../components/BackButton";
 
 const StartWorkout = ({ route }) => {
-  const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
-  const [expGained, setExpGained] = useState(0);
-  const [finalExp, setFinalExp] = useState(0);
-
   const navigation = useNavigation();
+  const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
+  const [expGained, setExpGained] = useState(426); // Example EXP gained
+  const [finalExp, setFinalExp] = useState(1574); // Example current total EXP
+  const baseExp = 1000;
+  const level = Math.floor(finalExp / baseExp) + 1;
+  const expToNextLevel = level * baseExp;
+  const expProgress = finalExp - (level - 1) * baseExp;
+
+  // Animated values
+  const expBarAnim = useRef(
+    new Animated.Value((expProgress / expToNextLevel) * 100)
+  ).current;
+  const expCounterAnim = useRef(
+    new Animated.Value(finalExp - expGained)
+  ).current;
+  const [displayExp, setDisplayExp] = useState(finalExp - expGained);
+
   const { selectedWorkout, selectedSplitId } = route.params;
   const { exercises = [], title } = selectedWorkout;
 
@@ -82,6 +97,7 @@ const StartWorkout = ({ route }) => {
   const timer = useSelector((state) => state.timer.seconds);
   const [isPaused, setIsPaused] = useState(false);
   const [timerInterval, setTimerInterval] = useState(null);
+  const [workoutDuration, setWorkoutDuration] = useState(0);
 
   const togglePause = () => {
     setIsPaused(!isPaused);
@@ -161,6 +177,34 @@ const StartWorkout = ({ route }) => {
 
   const [finishModalVisible, setFinishModalVisible] = useState(false);
 
+  useEffect(() => {
+    if (workoutSummaryVisible) {
+      // Animate EXP bar fill
+      Animated.timing(expBarAnim, {
+        toValue: (expProgress / expToNextLevel) * 100,
+        duration: 1500,
+        useNativeDriver: false,
+        easing: Easing.ease,
+      }).start();
+
+      // Animate EXP counter
+      Animated.timing(expCounterAnim, {
+        toValue: finalExp, // Dynamically updated
+        duration: 1500,
+        useNativeDriver: false,
+      }).start();
+
+      // Update displayed EXP dynamically
+      expCounterAnim.addListener(({ value }) => {
+        setDisplayExp(Math.round(value));
+      });
+
+      return () => {
+        expCounterAnim.removeAllListeners();
+      };
+    }
+  }, [workoutSummaryVisible, finalExp]);
+
   const handleSaveWorkout = () => {
     setFinishModalVisible(true);
   };
@@ -168,10 +212,13 @@ const StartWorkout = ({ route }) => {
   const [performedExercises, setPerformedExercises] = useState([]);
 
   const saveWorkoutData = async () => {
-    setFinishModalVisible(false);
+    setFinishModalVisible(false); // Close confirmation modal
 
     try {
       if (currentUser) {
+        setIsPaused(true); // Stop the timer when saving
+        setWorkoutDuration(timer); // Save workout duration
+
         let completedExercises = [];
 
         exercises.forEach((exercise, exerciseIndex) => {
@@ -193,7 +240,7 @@ const StartWorkout = ({ route }) => {
           return;
         }
 
-        // Fetch user's previous EXP
+        // Fetch user's EXP dynamically
         const userRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userRef);
         let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
@@ -206,10 +253,11 @@ const StartWorkout = ({ route }) => {
           duration: timer,
         };
 
+        // Save workout in Firestore
         const docRef = await addDoc(collection(db, "workouts"), workoutData);
         console.log("Workout data added with ID", docRef.id);
 
-        // Award EXP for this workout
+        // Award EXP dynamically
         const bodyWeight = 175;
         const isVerified = false;
         const expResult = await awardEXP(
@@ -220,14 +268,13 @@ const StartWorkout = ({ route }) => {
         );
 
         if (expResult) {
-          const newEXP = expResult.exp; // Total EXP after awarding
-          const expEarned = newEXP - previousEXP; // Calculate EXP gained from this workout
+          const newEXP = expResult.exp;
+          const expEarned = newEXP - previousEXP;
 
-          setExpGained(expEarned); // Store the EXP gained for display
-          setFinalExp(newEXP); // Update final EXP
-
-          setPerformedExercises(completedExercises);
-          setWorkoutSummaryVisible(true);
+          setExpGained(expEarned);
+          setFinalExp(newEXP);
+          setPerformedExercises(completedExercises); // ✅ Store exercises correctly
+          setWorkoutSummaryVisible(true); // ✅ Open modal AFTER saving
         } else {
           console.error("EXP calculation failed.");
         }
@@ -376,7 +423,10 @@ const StartWorkout = ({ route }) => {
           </View>
         ))}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveWorkout}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveWorkout} // Use this function again
+        >
           <Text style={styles.saveBtnTxt}>Save Workout</Text>
         </TouchableOpacity>
       </View>
@@ -415,6 +465,7 @@ const StartWorkout = ({ route }) => {
         <View style={styles.centeredView}>
           <View style={styles.modalContainer}>
             <Text style={styles.summaryTitle}>Workout Summary</Text>
+            <Text style={styles.durationText}>{formatTime(timer)}</Text>
 
             <ScrollView style={styles.summaryList}>
               {performedExercises.length > 0 ? (
@@ -433,14 +484,26 @@ const StartWorkout = ({ route }) => {
               )}
             </ScrollView>
 
+            {/* EXP Animated Counter */}
             <Text style={styles.expText}>EXP Gained: +{expGained}</Text>
+            <Text style={styles.expBarText}>
+              Level {level} - {displayExp} / {expToNextLevel} EXP
+            </Text>
 
+            {/* Animated EXP Bar */}
             <View style={styles.expBarContainer}>
-              <View
-                style={[styles.expBar, { width: `${(finalExp % 1000) / 10}%` }]}
+              <Animated.View
+                style={[
+                  styles.expBar,
+                  {
+                    width: expBarAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ["0%", "100%"],
+                    }),
+                  },
+                ]}
               />
             </View>
-            <Text style={styles.expBarText}>{finalExp} / 1000 EXP</Text>
 
             <TouchableOpacity
               onPress={() => {
@@ -659,6 +722,7 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
   setText: {
     fontSize: 14,
