@@ -36,12 +36,14 @@ import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import BackButton from "../components/BackButton";
+import LoadingScreen from "../components/LoadingScreen";
 
 const StartWorkout = ({ route }) => {
   const navigation = useNavigation();
   const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
   const [expGained, setExpGained] = useState(426); // Example EXP gained
   const [finalExp, setFinalExp] = useState(1574); // Example current total EXP
+  const [loadingVisible, setLoadingVisible] = useState(false);
   const baseExp = 1000;
   const level = Math.floor(finalExp / baseExp) + 1;
   const expToNextLevel = level * baseExp;
@@ -212,12 +214,13 @@ const StartWorkout = ({ route }) => {
   const [performedExercises, setPerformedExercises] = useState([]);
 
   const saveWorkoutData = async () => {
-    setFinishModalVisible(false); // Close confirmation modal
+    setLoadingVisible(true); // Show loading screen
+    setFinishModalVisible(false);
 
     try {
       if (currentUser) {
-        setIsPaused(true); // Stop the timer when saving
-        setWorkoutDuration(timer); // Save workout duration
+        setIsPaused(true); // Stop the timer
+        setWorkoutDuration(timer); // Store final workout duration
 
         let completedExercises = [];
 
@@ -237,10 +240,10 @@ const StartWorkout = ({ route }) => {
 
         if (completedExercises.length === 0) {
           alert("No exercises were completed. Workout not saved.");
+          setLoadingVisible(false); // Hide loading screen
           return;
         }
 
-        // Fetch user's EXP dynamically
         const userRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userRef);
         let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
@@ -253,11 +256,9 @@ const StartWorkout = ({ route }) => {
           duration: timer,
         };
 
-        // Save workout in Firestore
         const docRef = await addDoc(collection(db, "workouts"), workoutData);
         console.log("Workout data added with ID", docRef.id);
 
-        // Award EXP dynamically
         const bodyWeight = 175;
         const isVerified = false;
         const expResult = await awardEXP(
@@ -273,8 +274,9 @@ const StartWorkout = ({ route }) => {
 
           setExpGained(expEarned);
           setFinalExp(newEXP);
-          setPerformedExercises(completedExercises); // ✅ Store exercises correctly
-          setWorkoutSummaryVisible(true); // ✅ Open modal AFTER saving
+
+          setPerformedExercises(completedExercises);
+          setWorkoutSummaryVisible(true);
         } else {
           console.error("EXP calculation failed.");
         }
@@ -284,6 +286,8 @@ const StartWorkout = ({ route }) => {
     } catch (error) {
       console.error("Error adding workout data:", error);
     }
+
+    setLoadingVisible(false); // Hide loading screen when done
   };
 
   const fetchPreviousWorkout = async () => {
@@ -330,194 +334,202 @@ const StartWorkout = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.stickyHeader}>
-          <View style={styles.titleContainer}>
-            <BackButton destination="HomeScreen" />
+    <>
+      <LoadingScreen isVisible={loadingVisible} />
+      <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.stickyHeader}>
+            <View style={styles.titleContainer}>
+              <BackButton destination="HomeScreen" />
 
-            <Text style={styles.title}>{title}</Text>
+              <Text style={styles.title}>{title}</Text>
 
-            <TouchableOpacity
-              onPress={togglePause}
-              style={styles.timerContainer}
-            >
-              <Text style={styles.timerText}>{formatTime(timer)}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
-      {exercises &&
-        exercises.map((exercise, exerciseIndex) => (
-          <View key={exerciseIndex} style={styles.exerciseContainer}>
-            <Text style={styles.exerciseTitle}>{exercise.title}</Text>
-
-            <View style={styles.headerContainer}>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Set</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Prev</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>lbs</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Reps</Text>
-              </View>
+              <TouchableOpacity
+                onPress={togglePause}
+                style={styles.timerContainer}
+              >
+                <Text style={styles.timerText}>{formatTime(timer)}</Text>
+              </TouchableOpacity>
             </View>
+          </View>
+        </SafeAreaView>
+        {exercises &&
+          exercises.map((exercise, exerciseIndex) => (
+            <View key={exerciseIndex} style={styles.exerciseContainer}>
+              <Text style={styles.exerciseTitle}>{exercise.title}</Text>
 
-            {setInputs[exerciseIndex] &&
-              setInputs[exerciseIndex].map((set, setIndex) => (
-                <View
-                  key={`${exerciseIndex}-${setIndex}`}
-                  style={styles.setContainer}
-                >
-                  <View style={styles.setColumn}>
-                    <TouchableOpacity style={styles.setss}>
-                      <Text>{setIndex + 1}</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.previousColumn}>
-                    <Text style={styles.previousText}>
-                      {previousData[exerciseIndex] &&
-                      previousData[exerciseIndex].sets &&
-                      previousData[exerciseIndex].sets[setIndex] &&
-                      previousData[exerciseIndex].sets[setIndex].lbs &&
-                      previousData[exerciseIndex].sets[setIndex].reps
-                        ? `${previousData[exerciseIndex].sets[setIndex].lbs} x ${previousData[exerciseIndex].sets[setIndex].reps}`
-                        : "---"}
-                    </Text>
-                  </View>
-
-                  <TextInput
-                    style={styles.input}
-                    placeholder="lbs"
-                    keyboardType="numeric"
-                    returnKeyType="done"
-                    value={set.lbs}
-                    onChangeText={(value) =>
-                      handleInputChange(exerciseIndex, setIndex, "lbs", value)
-                    }
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Reps"
-                    keyboardType="numeric"
-                    returnKeyType="done"
-                    value={set.reps}
-                    onChangeText={(value) =>
-                      handleInputChange(exerciseIndex, setIndex, "reps", value)
-                    }
-                  />
+              <View style={styles.headerContainer}>
+                <View style={styles.setColumn}>
+                  <Text style={styles.headerText}>Set</Text>
                 </View>
-              ))}
+                <View style={styles.setColumn}>
+                  <Text style={styles.headerText}>Prev</Text>
+                </View>
+                <View style={styles.setColumn}>
+                  <Text style={styles.headerText}>lbs</Text>
+                </View>
+                <View style={styles.setColumn}>
+                  <Text style={styles.headerText}>Reps</Text>
+                </View>
+              </View>
 
-            <TouchableOpacity
-              onPress={() => handleAddSet(exerciseIndex)}
-              style={styles.addButton}
-            >
-              <Text style={styles.addButtonText}>Add Set</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSaveWorkout} // Use this function again
-        >
-          <Text style={styles.saveBtnTxt}>Save Workout</Text>
-        </TouchableOpacity>
-      </View>
+              {setInputs[exerciseIndex] &&
+                setInputs[exerciseIndex].map((set, setIndex) => (
+                  <View
+                    key={`${exerciseIndex}-${setIndex}`}
+                    style={styles.setContainer}
+                  >
+                    <View style={styles.setColumn}>
+                      <TouchableOpacity style={styles.setss}>
+                        <Text>{setIndex + 1}</Text>
+                      </TouchableOpacity>
+                    </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={finishModalVisible}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalContainer}>
-            <Text>Save Workout?</Text>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                onPress={saveWorkoutData}
-                style={styles.saveBtn}
-              >
-                <Text style={styles.btnText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setFinishModalVisible(false)}
-                style={styles.cancelBtn}
-              >
-                <Text style={styles.btnText}> Cancel </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={workoutSummaryVisible}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.summaryTitle}>Workout Summary</Text>
-            <Text style={styles.durationText}>{formatTime(timer)}</Text>
-
-            <ScrollView style={styles.summaryList}>
-              {performedExercises.length > 0 ? (
-                performedExercises.map((exercise, index) => (
-                  <View key={index} style={styles.summaryItem}>
-                    <Text style={styles.summaryText}>{exercise.title}</Text>
-                    {exercise.sets.map((set, setIndex) => (
-                      <Text key={setIndex} style={styles.setText}>
-                        Set {setIndex + 1}: {set.lbs} lbs x {set.reps} reps
+                    <View style={styles.previousColumn}>
+                      <Text style={styles.previousText}>
+                        {previousData[exerciseIndex] &&
+                        previousData[exerciseIndex].sets &&
+                        previousData[exerciseIndex].sets[setIndex] &&
+                        previousData[exerciseIndex].sets[setIndex].lbs &&
+                        previousData[exerciseIndex].sets[setIndex].reps
+                          ? `${previousData[exerciseIndex].sets[setIndex].lbs} x ${previousData[exerciseIndex].sets[setIndex].reps}`
+                          : "---"}
                       </Text>
-                    ))}
+                    </View>
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="lbs"
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      value={set.lbs}
+                      onChangeText={(value) =>
+                        handleInputChange(exerciseIndex, setIndex, "lbs", value)
+                      }
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Reps"
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      value={set.reps}
+                      onChangeText={(value) =>
+                        handleInputChange(
+                          exerciseIndex,
+                          setIndex,
+                          "reps",
+                          value
+                        )
+                      }
+                    />
                   </View>
-                ))
-              ) : (
-                <Text style={styles.noDataText}>No exercises performed.</Text>
-              )}
-            </ScrollView>
+                ))}
 
-            {/* EXP Animated Counter */}
-            <Text style={styles.expText}>EXP Gained: +{expGained}</Text>
-            <Text style={styles.expBarText}>
-              Level {level} - {displayExp} / {expToNextLevel} EXP
-            </Text>
-
-            {/* Animated EXP Bar */}
-            <View style={styles.expBarContainer}>
-              <Animated.View
-                style={[
-                  styles.expBar,
-                  {
-                    width: expBarAnim.interpolate({
-                      inputRange: [0, 100],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  },
-                ]}
-              />
+              <TouchableOpacity
+                onPress={() => handleAddSet(exerciseIndex)}
+                style={styles.addButton}
+              >
+                <Text style={styles.addButtonText}>Add Set</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                setWorkoutSummaryVisible(false);
-                navigation.navigate("HomeScreen");
-              }}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+          ))}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSaveWorkout} // Use this function again
+          >
+            <Text style={styles.saveBtnTxt}>Save Workout</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-    </ScrollView>
+
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={finishModalVisible}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalContainer}>
+              <Text>Save Workout?</Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  onPress={saveWorkoutData}
+                  style={styles.saveBtn}
+                >
+                  <Text style={styles.btnText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setFinishModalVisible(false)}
+                  style={styles.cancelBtn}
+                >
+                  <Text style={styles.btnText}> Cancel </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={workoutSummaryVisible}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.summaryTitle}>Workout Summary</Text>
+              <Text style={styles.durationText}>{formatTime(timer)}</Text>
+
+              <ScrollView style={styles.summaryList}>
+                {performedExercises.length > 0 ? (
+                  performedExercises.map((exercise, index) => (
+                    <View key={index} style={styles.summaryItem}>
+                      <Text style={styles.summaryText}>{exercise.title}</Text>
+                      {exercise.sets.map((set, setIndex) => (
+                        <Text key={setIndex} style={styles.setText}>
+                          Set {setIndex + 1}: {set.lbs} lbs x {set.reps} reps
+                        </Text>
+                      ))}
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noDataText}>No exercises performed.</Text>
+                )}
+              </ScrollView>
+
+              {/* EXP Animated Counter */}
+              <Text style={styles.expText}>EXP Gained: +{expGained}</Text>
+              <Text style={styles.expBarText}>
+                Level {level} - {displayExp} / {expToNextLevel} EXP
+              </Text>
+
+              {/* Animated EXP Bar */}
+              <View style={styles.expBarContainer}>
+                <Animated.View
+                  style={[
+                    styles.expBar,
+                    {
+                      width: expBarAnim.interpolate({
+                        inputRange: [0, 100],
+                        outputRange: ["0%", "100%"],
+                      }),
+                    },
+                  ]}
+                />
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setWorkoutSummaryVisible(false);
+                  navigation.navigate("HomeScreen");
+                }}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </>
   );
 };
 

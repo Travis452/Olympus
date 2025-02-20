@@ -19,6 +19,7 @@ import {
   limit,
   getDocs,
 } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 import { LEVELS } from "./levels";
 
@@ -27,7 +28,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAFU3LDI099OWf_X2VIu1n9zBlrfjqRzJs",
   authDomain: "olympus-43444.firebaseapp.com",
   projectId: "olympus-43444",
-  storageBucket: "olympus-43444.appspot.com",
+  storageBucket: "olympus-43444.firebasestorage.app",
   messagingSenderId: "939160989913",
   appId: "1:939160989913:web:c5c7beedc9cb58efe1cec8",
   measurementId: "G-3DQ4Y38MQW",
@@ -40,6 +41,7 @@ initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
+const storage = getStorage(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -275,4 +277,4 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
   }
 };
 
-export { auth, db };
+export { auth, db, storage };
