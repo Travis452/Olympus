@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db, storage } from "../config/firebase";
 
 const Profile = () => {
@@ -23,6 +25,11 @@ const Profile = () => {
   const { exp, level } = useSelector((state) => state.user);
   const [profilePic, setProfilePic] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userStats, setUserStats] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (user) {
@@ -32,6 +39,21 @@ const Profile = () => {
       }
     }
   }, [user, dispatch]);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        fetchUserStats(user.uid);
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -72,6 +94,28 @@ const Profile = () => {
       setUploading(false);
     }
   };
+
+  const fetchUserStats = async (userId) => {
+    try {
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        setUserStats(userSnap.data());
+      } else {
+        console.log("No user data found.");
+      }
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser && isFocused) {
+      fetchUserStats(currentUser.uid);
+    }
+  }, [currentUser, isFocused]);
 
   if (!user) {
     return (
@@ -117,6 +161,28 @@ const Profile = () => {
             <View style={[styles.expBar, { width: `${(exp % 1000) / 10}%` }]} />
           </View>
           <Text style={styles.expText}>{exp} / 1000 EXP</Text>
+        </View>
+
+        <View style={styles.profileCard}>
+          <Text style={styles.headerText}>Profile Stats</Text>
+          <Text style={styles.statText}>Email: {currentUser?.email}</Text>
+          <Text style={styles.statText}>Level: {userStats.level || 1}</Text>
+          <Text style={styles.statText}>EXP: {userStats.exp || 0}</Text>
+          <Text style={styles.statText}>
+            Best Bench: {userStats.bestBench || 0} lbs
+          </Text>
+          <Text style={styles.statText}>
+            Best Squat: {userStats.bestSquat || 0} lbs
+          </Text>
+          <Text style={styles.statText}>
+            Best Deadlift: {userStats.bestDeadlift || 0} lbs
+          </Text>
+          <Text style={styles.statText}>
+            Weight: {userStats.weight || "Not set"} lbs
+          </Text>
+          <Text style={styles.statText}>
+            Height: {userStats.height || "Not set"}
+          </Text>
         </View>
       </SafeAreaView>
     </ScrollView>
@@ -191,6 +257,34 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  //Stats Section
+
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 20,
+  },
+  profileCard: {
+    backgroundColor: "#f8f8f8",
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  statText: {
+    fontSize: 16,
+    marginVertical: 5,
   },
 });
 

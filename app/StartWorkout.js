@@ -35,6 +35,7 @@ import { db, awardEXP } from "../config/firebase";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
+import { updateUserStats } from "../config/firebase";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
 
@@ -267,6 +268,26 @@ const StartWorkout = ({ route }) => {
           bodyWeight,
           isVerified
         );
+
+        let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
+
+        completedExercises.forEach((exercise) => {
+          const exerciseName = exercise.title.toLowerCase();
+          const maxWeight = Math.max(
+            ...exercise.sets.map((set) => parseInt(set.lbs || 0))
+          );
+
+          if (exerciseName.includes("bench")) {
+            newStats.bestBench = Math.max(newStats.bestBench, maxWeight);
+          } else if (exerciseName.includes("squat")) {
+            newStats.bestSquat = Math.max(newStats.bestSquat, maxWeight);
+          } else if (exerciseName.includes("deadlift")) {
+            newStats.bestDeadlift = Math.max(newStats.bestDeadlift, maxWeight);
+          }
+        });
+
+        console.log("💪 Updating user stats with:", newStats);
+        await updateUserStats(currentUser.uid, newStats);
 
         if (expResult) {
           const newEXP = expResult.exp;

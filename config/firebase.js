@@ -118,6 +118,43 @@ const getPreviousWorkout = async (userId, exerciseTitle) => {
   }
 };
 
+export const updateUserStats = async (userId, stats) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      console.log("User not found in database");
+      return;
+    }
+
+    const userData = userSnap.data();
+    let updatedStats = {};
+
+    if (stats.bestBench && stats.bestBench > (userData.bestBench || 0)) {
+      updatedStats.bestBench = stats.bestBench;
+    }
+    if (stats.bestSquat && stats.bestSquat > (userData.bestSquat || 0)) {
+      updatedStats.bestSquat = stats.bestSquat;
+    }
+    if (
+      stats.bestDeadlift &&
+      stats.bestDeadlift > (userData.bestDeadlift || 0)
+    ) {
+      updatedStats.bestDeadlift = stats.bestDeadlift;
+    }
+
+    if (Object.keys(updatedStats).length > 0) {
+      await updateDoc(userRef, updatedStats);
+      console.log("✅ User PR stats updated:", updatedStats);
+    } else {
+      console.log("No PR stats to update.");
+    }
+  } catch (error) {
+    console.error("❌ Error updating user PR stats:", error);
+  }
+};
+
 // ✅ Update User EXP & Level
 export const updateUserEXP = async (userId, expToAdd) => {
   try {
