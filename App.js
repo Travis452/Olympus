@@ -1,52 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, StatusBar } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import store, { persistor } from './src/redux/store'; // Ensure correct path
-import MainStackNavigator from './app/MainStackNavigator';
-import AuthNavigation from './app/AuthNavigation';
-import useAuth from './hooks/useAuth';
+import React, { useState, useEffect } from "react";
+import { View, ActivityIndicator, StatusBar } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import store, { persistor } from "./src/redux/store";
+import MainStackNavigator from "./app/MainStackNavigator";
+import AuthNavigation from "./app/AuthNavigation";
+import { db } from "./config/firebase"; // ✅ Ensure this is imported
 
 const App = () => {
-    const { user, isLoading } = useAuth();
-    const [currentUser, setCurrentUser] = useState(null);
+  const [isAppLoading, setIsAppLoading] = useState(true); // Controls overall app load
+  const [currentUser, setCurrentUser] = useState(null);
+  const [hasProfile, setHasProfile] = useState(false);
 
-    useEffect(() => {
-        if (user) {
-            console.log('User is logged in:', user);
-        } else {
-            console.log('No user is logged in');
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(userRef);
+
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            setHasProfile(!!userData.username); // Profile created if username exists
+          } else {
+            setHasProfile(false);
+          }
+        } catch (err) {
+          console.error("🔥 Error checking user profile:", err.message);
+          setHasProfile(false);
         }
-    }, [user]);
+      } else {
+        setCurrentUser(null);
+        setHasProfile(false);
+      }
 
-    useEffect(() => {
-        const auth = getAuth();
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setCurrentUser(user);
-        });
-        return unsubscribe;
-    }, []);
+      setIsAppLoading(false); // ✅ Done loading
+    });
 
-    if (isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#dc143c" />
-            </View>
-        );
-    }
+    return unsubscribe;
+  }, []);
 
+  if (isAppLoading) {
     return (
-        <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-                <StatusBar barStyle='dark-content' />
-                <NavigationContainer>
-                    {currentUser ? <MainStackNavigator /> : <AuthNavigation />}
-                </NavigationContainer>
-            </PersistGate>
-        </Provider>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#dc143c" />
+      </View>
     );
+  }
+
+  return (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <StatusBar barStyle="dark-content" />
+        <NavigationContainer>
+          {currentUser ? (
+            <MainStackNavigator hasProfile={hasProfile} />
+          ) : (
+            <AuthNavigation />
+          )}
+        </NavigationContainer>
+      </PersistGate>
+    </Provider>
+  );
 };
 
 export default App;

@@ -165,9 +165,14 @@ const Profile = () => {
 
         <View style={styles.profileCard}>
           <Text style={styles.headerText}>Profile Stats</Text>
-          <Text style={styles.statText}>Email: {currentUser?.email}</Text>
           <Text style={styles.statText}>Level: {userStats.level || 1}</Text>
           <Text style={styles.statText}>EXP: {userStats.exp || 0}</Text>
+          <Text style={styles.statText}>
+            Height: {userStats.height || "Not set"}
+          </Text>
+          <Text style={styles.statText}>
+            Weight: {userStats.weight || "Not set"} lbs
+          </Text>
           <Text style={styles.statText}>
             Best Bench: {userStats.bestBench || 0} lbs
           </Text>
@@ -176,12 +181,6 @@ const Profile = () => {
           </Text>
           <Text style={styles.statText}>
             Best Deadlift: {userStats.bestDeadlift || 0} lbs
-          </Text>
-          <Text style={styles.statText}>
-            Weight: {userStats.weight || "Not set"} lbs
-          </Text>
-          <Text style={styles.statText}>
-            Height: {userStats.height || "Not set"}
           </Text>
         </View>
       </SafeAreaView>
