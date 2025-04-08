@@ -113,7 +113,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (currentUser && isFocused) {
-      fetchUserStats(currentUser.uid);
+      dispatch(fetchUserEXP(currentUser.uid))
+        .unwrap()
+        .then((data) => {
+          console.log("✅ Updated EXP fetched:", data.exp);
+        })
+        .catch((err) => {
+          console.error("❌ Failed to fetch EXP:", err);
+        });
+
+      fetchUserStats(currentUser.uid); // keep this if you still want additional stats
     }
   }, [currentUser, isFocused]);
 
@@ -124,6 +133,9 @@ const Profile = () => {
       </View>
     );
   }
+
+  const expProgress = exp % 1000;
+  const progressWidth = `${(expProgress / 1000) * 100}%`;
 
   return (
     <ScrollView style={styles.container}>
@@ -158,7 +170,7 @@ const Profile = () => {
         <View style={styles.levelContainer}>
           <Text style={styles.levelText}>Level: {level}</Text>
           <View style={styles.expBarContainer}>
-            <View style={[styles.expBar, { width: `${(exp % 1000) / 10}%` }]} />
+            <View style={[styles.expBar, { width: progressWidth }]} />
           </View>
           <Text style={styles.expText}>{exp} / 1000 EXP</Text>
         </View>

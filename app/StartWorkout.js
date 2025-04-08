@@ -51,9 +51,7 @@ const StartWorkout = ({ route }) => {
   const expProgress = finalExp - (level - 1) * baseExp;
 
   // Animated values
-  const expBarAnim = useRef(
-    new Animated.Value((expProgress / expToNextLevel) * 100)
-  ).current;
+  const expBarAnim = useRef(new Animated.Value(0)).current;
   const expCounterAnim = useRef(
     new Animated.Value(finalExp - expGained)
   ).current;
@@ -181,32 +179,37 @@ const StartWorkout = ({ route }) => {
   const [finishModalVisible, setFinishModalVisible] = useState(false);
 
   useEffect(() => {
-    if (workoutSummaryVisible) {
-      // Animate EXP bar fill
+    if (workoutSummaryVisible && expGained > 0) {
+      const previousEXP = finalExp - expGained;
+      const currentPercentage = (previousEXP % 1000) / 10;
+      const newPercentage = (finalExp % 1000) / 10;
+
+      expBarAnim.setValue(currentPercentage);
+
       Animated.timing(expBarAnim, {
-        toValue: (expProgress / expToNextLevel) * 100,
+        toValue: newPercentage,
         duration: 1500,
         useNativeDriver: false,
-        easing: Easing.ease,
+        easing: Easing.out(Easing.ease),
       }).start();
 
-      // Animate EXP counter
+      expCounterAnim.setValue(previousEXP);
+
       Animated.timing(expCounterAnim, {
-        toValue: finalExp, // Dynamically updated
+        toValue: finalExp,
         duration: 1500,
         useNativeDriver: false,
       }).start();
 
-      // Update displayed EXP dynamically
-      expCounterAnim.addListener(({ value }) => {
+      const listenerId = expCounterAnim.addListener(({ value }) => {
         setDisplayExp(Math.round(value));
       });
 
       return () => {
-        expCounterAnim.removeAllListeners();
+        expCounterAnim.removeListener(listenerId);
       };
     }
-  }, [workoutSummaryVisible, finalExp]);
+  }, [workoutSummaryVisible, finalExp, expGained]);
 
   const handleSaveWorkout = () => {
     setFinishModalVisible(true);
@@ -295,7 +298,7 @@ const StartWorkout = ({ route }) => {
 
           setExpGained(expEarned);
           setFinalExp(newEXP);
-
+          dispatch(fetchUserEXP(currentUser.uid));
           setPerformedExercises(completedExercises);
           setWorkoutSummaryVisible(true);
         } else {
@@ -327,7 +330,7 @@ const StartWorkout = ({ route }) => {
 
       if (querySnapshot.empty) {
         console.log("No previous workout found.");
-        setPreviousData([]); // Set an empty array instead of breaking
+        setPreviousData([]);
         return;
       }
 
@@ -338,7 +341,7 @@ const StartWorkout = ({ route }) => {
         console.error(
           "Error: No 'exercises' field or invalid format in latestWorkout!"
         );
-        setPreviousData([]); // Prevent errors by setting a default empty array
+        setPreviousData([]);
         return;
       }
 
@@ -457,7 +460,7 @@ const StartWorkout = ({ route }) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.saveButton}
-            onPress={handleSaveWorkout} // Use this function again
+            onPress={handleSaveWorkout}
           >
             <Text style={styles.saveBtnTxt}>Save Workout</Text>
           </TouchableOpacity>

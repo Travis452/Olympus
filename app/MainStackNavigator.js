@@ -7,6 +7,7 @@ import StartWorkout from "./StartWorkout";
 import CustomWorkout from "./CustomWorkout";
 import MainTabs from "./MainTabs";
 import CreateProfile from "./CreateProfile";
+import Exercises from "./Exercises";
 
 const Stack = createStackNavigator();
 
@@ -14,7 +15,6 @@ const Stack = createStackNavigator();
 const MainStackNavigator = ({ hasProfile }) => {
   return (
     <Stack.Navigator
-      // 👇 Dynamically set the starting screen
       initialRouteName={hasProfile ? "MainTabs" : "CreateProfile"}
     >
       <Stack.Screen
@@ -32,6 +32,9 @@ const MainStackNavigator = ({ hasProfile }) => {
         component={WorkoutDetail}
         options={{ headerShown: false }}
       />
+
+      <Stack.Screen name="Exercises" component={Exercises} />
+
       <Stack.Screen
         name="Profile"
         component={Profile}

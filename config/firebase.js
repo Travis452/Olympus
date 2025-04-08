@@ -255,7 +255,9 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
       return null;
     }
 
-    let { exp, level } = userSnap.data();
+    const userData = userSnap.data();
+    let exp = typeof userData.exp === "number" ? userData.exp : 0;
+    let level = typeof userData.level === "number" ? userData.level : 1;
     let totalEXP = 0;
     let requiresVerification = false;
 
