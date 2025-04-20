@@ -1,11 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  incrementTimer,
-  resetTimer,
-  setTimer,
-} from "../src/redux/timerReducer";
-import {
   Animated,
   Easing,
   View,
@@ -36,12 +31,14 @@ import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { updateUserStats } from "../config/firebase";
+import WorkoutTimer from "../components/WorkoutTimer";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
 
 const StartWorkout = ({ route }) => {
   const navigation = useNavigation();
   const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [expGained, setExpGained] = useState(426); // Example EXP gained
   const [finalExp, setFinalExp] = useState(1574); // Example current total EXP
   const [loadingVisible, setLoadingVisible] = useState(false);
@@ -95,62 +92,12 @@ const StartWorkout = ({ route }) => {
   };
 
   const dispatch = useDispatch();
-  const timer = useSelector((state) => state.timer.seconds);
-  const [isPaused, setIsPaused] = useState(false);
-  const [timerInterval, setTimerInterval] = useState(null);
   const [workoutDuration, setWorkoutDuration] = useState(0);
-
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
-
-  useEffect(() => {
-    let interval;
-    dispatch(resetTimer());
-    const timerDelay = setTimeout(() => {
-      interval = setInterval(() => {
-        dispatch(incrementTimer());
-      }, 1000);
-      setTimerInterval(interval);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timerDelay);
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (isPaused && timerInterval) {
-      clearInterval(timerInterval);
-      setTimerInterval(null);
-    } else if (!isPaused && !timerInterval) {
-      const interval = setInterval(() => {
-        dispatch(incrementTimer());
-      }, 1000);
-      setTimerInterval(interval);
-    }
-
-    return () => {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-      }
-    };
-  }, [isPaused, timerInterval, dispatch]);
 
   const handleInputChange = (exerciseIndex, setIndex, key, value) => {
     const newSetInputs = [...setInputs];
     newSetInputs[exerciseIndex][setIndex][key] = value;
     setSetInputs(newSetInputs);
-  };
-
-  const formatTime = (seconds) => {
-    const positiveSeconds = Math.max(seconds, 0);
-    const minutes = Math.floor(positiveSeconds / 60);
-    const remainingSeconds = positiveSeconds % 60;
-    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
   };
 
   useEffect(() => {
@@ -223,7 +170,6 @@ const StartWorkout = ({ route }) => {
 
     try {
       if (currentUser) {
-        setIsPaused(true); // Stop the timer
         setWorkoutDuration(timer); // Store final workout duration
 
         let completedExercises = [];
@@ -368,12 +314,10 @@ const StartWorkout = ({ route }) => {
 
               <Text style={styles.title}>{title}</Text>
 
-              <TouchableOpacity
-                onPress={togglePause}
-                style={styles.timerContainer}
-              >
-                <Text style={styles.timerText}>{formatTime(timer)}</Text>
-              </TouchableOpacity>
+              <WorkoutTimer
+                isPaused={isPaused}
+                onTogglePause={() => setIsPaused(!isPaused)}
+              />
             </View>
           </View>
         </SafeAreaView>
@@ -500,7 +444,6 @@ const StartWorkout = ({ route }) => {
           <View style={styles.centeredView}>
             <View style={styles.modalContainer}>
               <Text style={styles.summaryTitle}>Workout Summary</Text>
-              <Text style={styles.durationText}>{formatTime(timer)}</Text>
 
               <ScrollView style={styles.summaryList}>
                 {performedExercises.length > 0 ? (
@@ -595,21 +538,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     marginLeft: 50,
     marginTop: 25,
-    textAlign: "center",
-  },
-  timerContainer: {
-    backgroundColor: "black",
-    borderRadius: 15,
-    width: "20%",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-    marginLeft: 15,
-  },
-  timerText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "white",
     textAlign: "center",
   },
   exerciseContainer: {

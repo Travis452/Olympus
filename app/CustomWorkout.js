@@ -11,14 +11,16 @@ import {
   TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Ionicons from "react-native-vector-icons/Ionicons";
 import Exercises from "./Exercises";
+import BackButton from "../components/BackButton";
+import WorkoutTimer from "../components/WorkoutTimer";
 
 const CustomWorkout = () => {
   const navigation = useNavigation();
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [setInputs, setSetInputs] = useState([]);
+  const [isPaused, setIsPaused] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-500)).current;
 
@@ -39,10 +41,6 @@ const CustomWorkout = () => {
     }).start(() => {
       setShowExerciseModal(false);
     });
-  };
-
-  const handleBack = () => {
-    navigation.navigate("HomeScreen");
   };
 
   const handleAddExercise = (exercise) => {
@@ -70,10 +68,13 @@ const CustomWorkout = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-            <Ionicons name="md-arrow-back" size={24} color="red" />
-          </TouchableOpacity>
+          <BackButton destination="HomeScreen" />
+
           <Text style={styles.title}>Custom Workout</Text>
+          <WorkoutTimer
+            isPaused={isPaused}
+            onTogglePause={() => setIsPaused(!isPaused)}
+          />
         </View>
 
         {selectedExercises.map((exercise, exerciseIndex) => (
