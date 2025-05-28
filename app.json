@@ -5,8 +5,9 @@
       "bundler": "metro"
     },
     "name": "Olympus",
-    "slug": "Olympus"
+    "slug": "Olympus",
+    "plugins": [
+      "expo-audio"
+    ]
   }
 }
-
-
