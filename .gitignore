@@ -1,4 +1,7 @@
 node_modules/
+.env
+.vscode
+.idea
 .expo/
 dist/
 npm-debug.*
