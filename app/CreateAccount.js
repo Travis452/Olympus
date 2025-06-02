@@ -23,6 +23,7 @@ const CreateAccount = () => {
 
   const handleSubmit = async () => {
     const { firstName, lastName, email, password } = state;
+    navigation.navigate('CreateProfile')
 
     try {
       if (email && password) {
@@ -41,12 +42,12 @@ const CreateAccount = () => {
           completedWorkouts: 0,
         });
 
-        // 👇 Redirect to CreateProfile instead of MainTabs
+        // Redirect to CreateProfile instead of MainTabs
         navigation.navigate("CreateProfile");
-        console.log("✅ User created and sent to CreateProfile screen");
+        console.log(" User created and sent to CreateProfile screen");
       }
     } catch (err) {
-      console.log("❌ Got error:", err.message);
+      console.log("Got error:", err.message);
     }
   };
 

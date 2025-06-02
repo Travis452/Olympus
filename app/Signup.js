@@ -15,11 +15,11 @@ const Signup = () => {
   const navigation = useNavigation();
   const { user } = useAuth(navigation);
 
-  useEffect(() => {
-    if (user) {
-      navigation.navigate("HomeScreen");
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user) {
+  //     navigation.navigate("HomeScreen");
+  //   }
+  // }, [user]);
 
   const onPressSignUp = () => {
     navigation.navigate("CreateAccount");

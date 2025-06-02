@@ -8,10 +8,10 @@ import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "./src/redux/store";
 import MainStackNavigator from "./app/MainStackNavigator";
 import AuthNavigation from "./app/AuthNavigation";
-import { db } from "./config/firebase"; // ✅ Ensure this is imported
+import { db } from "./config/firebase"; 
 
 const App = () => {
-  const [isAppLoading, setIsAppLoading] = useState(true); // Controls overall app load
+  const [isAppLoading, setIsAppLoading] = useState(true); 
   const [currentUser, setCurrentUser] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
 
@@ -40,7 +40,7 @@ const App = () => {
         setHasProfile(false);
       }
 
-      setIsAppLoading(false); // ✅ Done loading
+      setIsAppLoading(false); 
     });
 
     return unsubscribe;

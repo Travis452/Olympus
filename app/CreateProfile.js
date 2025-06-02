@@ -13,8 +13,9 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
+import {stopMusic} from '../utils/SoundManager';
 
 const CreateProfile = () => {
   const navigation = useNavigation();
@@ -32,18 +33,20 @@ const CreateProfile = () => {
       const user = getAuth().currentUser;
       if (user) {
         const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, {
+        await setDoc(userRef, {
           ...profile,
           weight: parseInt(profile.weight),
           height: profile.height,
           bestBench: parseInt(profile.bestBench),
           bestSquat: parseInt(profile.bestSquat),
           bestDeadlift: parseInt(profile.bestDeadlift),
-        });
+        }, {merge: true});
+
+        await stopMusic();
         navigation.navigate("MainTabs");
       }
     } catch (err) {
-      console.error("❌ Error saving profile:", err.message);
+      console.error("Error saving profile:", err.message);
     }
   };
 

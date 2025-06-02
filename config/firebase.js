@@ -1,4 +1,4 @@
-// ✅ Import the functions you need from the SDKs you need
+
 import { initializeApp, getApps } from "firebase/app";
 import {
   initializeAuth,
@@ -24,7 +24,7 @@ import { getStorage } from "firebase/storage";
 
 import { LEVELS } from "./levels";
 
-// ✅ Firebase Config
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAFU3LDI099OWf_X2VIu1n9zBlrfjqRzJs",
   authDomain: "olympus-43444.firebaseapp.com",
@@ -35,19 +35,19 @@ const firebaseConfig = {
   measurementId: "G-3DQ4Y38MQW",
 };
 
-// ✅ Initialize Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-const auth = initializeAuth(app, {
+initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
-
 const storage = getStorage(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 
-// ✅ Create User Profile with EXP & Level
+// Create User Profile with EXP & Level
 export const createUserProfile = async (userId, email) => {
   try {
     const userRef = doc(db, "users", userId);
@@ -67,7 +67,7 @@ export const createUserProfile = async (userId, email) => {
   }
 };
 
-// ✅ Fetch User EXP
+// Fetch User EXP
 export const getUserEXP = async (userId) => {
   try {
     const userRef = doc(db, "users", userId);
@@ -84,7 +84,7 @@ export const getUserEXP = async (userId) => {
   }
 };
 
-// ✅ Fetch Previous Workout for an Exercise (Fix)
+// Fetch Previous Workout for an Exercise (Fix)
 const getPreviousWorkout = async (userId, exerciseTitle) => {
   try {
     const querySnapshot = await getDocs(
@@ -105,17 +105,17 @@ const getPreviousWorkout = async (userId, exerciseTitle) => {
 
       if (matchedExercise) {
         console.log(
-          `🔄 Previous workout found for ${exerciseTitle}:`,
+          `Previous workout found for ${exerciseTitle}:`,
           matchedExercise.sets
         );
         return matchedExercise.sets.length > 0 ? matchedExercise.sets[0] : null;
       }
     }
 
-    console.log(`❌ No previous data for ${exerciseTitle}`);
+    console.log(`No previous data for ${exerciseTitle}`);
     return null;
   } catch (error) {
-    console.error("❌ Error fetching previous workout:", error);
+    console.error("Error fetching previous workout:", error);
     return null;
   }
 };
@@ -148,16 +148,16 @@ export const updateUserStats = async (userId, stats) => {
 
     if (Object.keys(updatedStats).length > 0) {
       await updateDoc(userRef, updatedStats);
-      console.log("✅ User PR stats updated:", updatedStats);
+      console.log("User PR stats updated:", updatedStats);
     } else {
       console.log("No PR stats to update.");
     }
   } catch (error) {
-    console.error("❌ Error updating user PR stats:", error);
+    console.error("Error updating user PR stats:", error);
   }
 };
 
-// ✅ Update User EXP & Level
+//  Update User EXP & Level
 export const updateUserEXP = async (userId, expToAdd) => {
   try {
     if (!userId) {
@@ -199,21 +199,21 @@ export const updateUserEXP = async (userId, expToAdd) => {
   }
 };
 
-// ✅ Strength Benchmarks
+// Strength Benchmarks
 const STRENGTH_BENCHMARKS = {
   bench: [225, 275, 315],
   squat: [225, 315, 405, 495],
   deadlift: [405, 495, 585],
 };
 
-// ✅ Exercise Tags
+// Exercise Tags
 const EXERCISE_TAGS = {
   "Flat Bench Press": "bench",
   "Barbell Squats": "squat",
   Deadlift: "deadlift",
 };
 
-// ✅ Strength Multiplier
+// Strength Multiplier
 const getStrengthMultiplier = (liftWeight, bodyWeight) => {
   const ratio = liftWeight / bodyWeight;
   if (ratio >= 2.5) return 2.0;
@@ -222,7 +222,7 @@ const getStrengthMultiplier = (liftWeight, bodyWeight) => {
   return 1.0;
 };
 
-// ✅ Progressive Overload EXP (Fix)
+// Progressive Overload EXP (Fix)
 const calculateProgressiveOverloadEXP = (
   prevWeight,
   prevReps,
@@ -234,26 +234,26 @@ const calculateProgressiveOverloadEXP = (
   if (newWeight > prevWeight) {
     expGain += 25;
     console.log(
-      `💪 Weight increased from ${prevWeight} to ${newWeight} (+25 EXP)`
+      `Weight increased from ${prevWeight} to ${newWeight} (+25 EXP)`
     );
   }
 
   if (newReps > prevReps) {
     expGain += 15;
-    console.log(`🔥 Reps increased from ${prevReps} to ${newReps} (+15 EXP)`);
+    console.log(`Reps increased from ${prevReps} to ${newReps} (+15 EXP)`);
   }
 
   return expGain;
 };
 
-// ✅ Award EXP (Now Progressive Overload EXP is Applied Correctly)
+// Award EXP (Now Progressive Overload EXP is Applied Correctly)
 export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.error("❌ User not found in database");
+      console.error("User not found in database");
       return null;
     }
 
@@ -267,7 +267,7 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
       const { title, sets } = exercise;
       const liftType = EXERCISE_TAGS[title];
 
-      // 🔄 Fetch previous workout data
+      // Fetch previous workout data
       const previousWorkout = await getPreviousWorkout(userId, title);
       let prevWeight = previousWorkout
         ? parseFloat(previousWorkout.lbs || 0)
@@ -278,7 +278,7 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
         const weight = parseFloat(set.lbs || 0);
         const reps = parseInt(set.reps || 0);
 
-        // 🏆 Add EXP for progressive overload
+        // Add EXP for progressive overload
         const overloadEXP = calculateProgressiveOverloadEXP(
           prevWeight,
           prevReps,
@@ -287,7 +287,7 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
         );
         totalEXP += overloadEXP;
 
-        // 🏋️ Benchmark Check
+        // Benchmark Check
         if (STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
           totalEXP += 250;
           requiresVerification = true;
@@ -310,11 +310,11 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     await updateDoc(userRef, { exp, level });
 
     console.log(
-      `✅ User ${userId} gained ${totalEXP} EXP. New Level: ${level}`
+      `User ${userId} gained ${totalEXP} EXP. New Level: ${level}`
     );
     return { exp, level };
   } catch (error) {
-    console.error("❌ Error awarding EXP:", error);
+    console.error("Error awarding EXP:", error);
   }
 };
 

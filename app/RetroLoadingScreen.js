@@ -2,54 +2,35 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { Audio } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
+import {playLoopingMusic} from '../utils/SoundManager';
 
 const RetroLoadingScreen = () => {
   const navigation = useNavigation();
-  const [sound, setSound] = useState(null);
+  // const [sound, setSound] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [dotCount, setDotCount] = useState(0);
 
+  useEffect(() => {
+    playLoopingMusic();
+  }, []);
   const DROP_TIME = 11500;
 
   useEffect(() => {
-    playSound();
+    // playSound();
     startFadeAnimation();
     startDotIncrement();
 
     const timeout = setTimeout(() => {
-      navigation.replace("Signup");
+      navigation.navigate("Signup");
     }, DROP_TIME);
 
     return () => {
-      if (sound) sound.unloadAsync();
+      // if (sound) sound.unloadAsync();
       clearTimeout(timeout);
     };
   }, []);
 
-  const playSound = async () => {
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: false,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
 
-      const { sound: playbackObject } = await Audio.Sound.createAsync(
-        require("../assets/music/k_d - s e l e c t - m e n u [NIGHTMODE].mp3"),
-        {
-          shouldPlay: true,
-          isLooping: false,
-          volume: 1.0,
-        }
-      );
-
-      setSound(playbackObject);
-    } catch (error) {
-      console.log("🎵 Audio playback error:", error);
-    }
-  };
 
   const startFadeAnimation = () => {
     Animated.loop(

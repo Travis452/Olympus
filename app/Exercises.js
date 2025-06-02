@@ -35,7 +35,7 @@ const Exercises = ({ onClose, onSelect }) => {
         setExercises(response.data); // limit for now
         setFilteredExercises(response.data); // set filtered copy
       } catch (error) {
-        console.error("❌ Error fetching exercises:", error);
+        console.error("Error fetching exercises:", error);
       } finally {
         setLoading(false);
       }

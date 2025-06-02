@@ -42,6 +42,8 @@ const StartWorkout = ({ route }) => {
   const [expGained, setExpGained] = useState(426); // Example EXP gained
   const [finalExp, setFinalExp] = useState(1574); // Example current total EXP
   const [loadingVisible, setLoadingVisible] = useState(false);
+  const timer = useSelector((state) => state.timer.seconds);
+
   const baseExp = 1000;
   const level = Math.floor(finalExp / baseExp) + 1;
   const expToNextLevel = level * baseExp;
