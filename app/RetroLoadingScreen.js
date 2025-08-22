@@ -16,7 +16,6 @@ const RetroLoadingScreen = () => {
   const DROP_TIME = 11500;
 
   useEffect(() => {
-    // playSound();
     startFadeAnimation();
     startDotIncrement();
 
@@ -29,8 +28,6 @@ const RetroLoadingScreen = () => {
       clearTimeout(timeout);
     };
   }, []);
-
-
 
   const startFadeAnimation = () => {
     Animated.loop(

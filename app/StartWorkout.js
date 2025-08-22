@@ -34,6 +34,7 @@ import { updateUserStats } from "../config/firebase";
 import WorkoutTimer from "../components/WorkoutTimer";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
+import WorkoutSummary from "../components/WorkoutSummary";
 
 const StartWorkout = ({ route }) => {
   const navigation = useNavigation();
@@ -301,7 +302,7 @@ const StartWorkout = ({ route }) => {
       console.log("Processed Previous Data:", previousData);
       setPreviousData(previousData);
     } catch (error) {
-      console.error("❌ Error fetching previous workout:", error);
+      console.error("Error fetching previous workout:", error);
     }
   };
 
@@ -438,65 +439,17 @@ const StartWorkout = ({ route }) => {
           </View>
         </Modal>
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={workoutSummaryVisible}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.summaryTitle}>Workout Summary</Text>
+        <WorkoutSummary
+  visible={workoutSummaryVisible}
+  performedExercises={performedExercises}
+  expGained={expGained}
+  finalExp={finalExp}
+  onClose={() => {
+    setWorkoutSummaryVisible(false);
+    navigation.navigate("HomeScreen");
+  }}
+/>
 
-              <ScrollView style={styles.summaryList}>
-                {performedExercises.length > 0 ? (
-                  performedExercises.map((exercise, index) => (
-                    <View key={index} style={styles.summaryItem}>
-                      <Text style={styles.summaryText}>{exercise.title}</Text>
-                      {exercise.sets.map((set, setIndex) => (
-                        <Text key={setIndex} style={styles.setText}>
-                          Set {setIndex + 1}: {set.lbs} lbs x {set.reps} reps
-                        </Text>
-                      ))}
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.noDataText}>No exercises performed.</Text>
-                )}
-              </ScrollView>
-
-              {/* EXP Animated Counter */}
-              <Text style={styles.expText}>EXP Gained: +{expGained}</Text>
-              <Text style={styles.expBarText}>
-                Level {level} - {displayExp} / {expToNextLevel} EXP
-              </Text>
-
-              {/* Animated EXP Bar */}
-              <View style={styles.expBarContainer}>
-                <Animated.View
-                  style={[
-                    styles.expBar,
-                    {
-                      width: expBarAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: ["0%", "100%"],
-                      }),
-                    },
-                  ]}
-                />
-              </View>
-
-              <TouchableOpacity
-                onPress={() => {
-                  setWorkoutSummaryVisible(false);
-                  navigation.navigate("HomeScreen");
-                }}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
     </>
   );
