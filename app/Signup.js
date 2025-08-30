@@ -1,12 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  ImageBackground,
   View,
-  Image,
-  Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import useAuth from "../hooks/useAuth";
@@ -14,12 +11,6 @@ import useAuth from "../hooks/useAuth";
 const Signup = () => {
   const navigation = useNavigation();
   const { user } = useAuth(navigation);
-
-  // useEffect(() => {
-  //   if (user) {
-  //     navigation.navigate("HomeScreen");
-  //   }
-  // }, [user]);
 
   const onPressSignUp = () => {
     navigation.navigate("CreateAccount");
@@ -31,83 +22,83 @@ const Signup = () => {
 
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={require("../assets/images/Gustave.jpeg")}
-        resizeMode="cover"
-        style={styles.image}
-        blurRadius={2.5}
-      >
-        {/* Scanline overlay */}
-        <View style={styles.scanlines} />
+      {/* Neon OLYMPUS plate */}
+      <View style={styles.brandPlate}>
+        <Text style={styles.brandTitle}>OLYMPUS</Text>
+      </View>
 
-        <Text style={styles.title}>Welcome to Olympus</Text>
+      <TouchableOpacity onPress={onPressSignUp} style={styles.neonButton}>
+        <Text style={styles.neonButtonText}>SIGN UP</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity onPress={onPressSignUp} style={styles.glowButton}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onPressLogin} style={styles.outlineButton}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-      </ImageBackground>
+      <TouchableOpacity onPress={onPressLogin} style={styles.neonButton}>
+        <Text style={styles.neonButtonText}>LOGIN</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
+const RED = "#ff1a1a";
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  image: {
-    flex: 1,
+    backgroundColor: "#000", // solid black
     justifyContent: "center",
     alignItems: "center",
   },
-  static: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.25, // Static intensity
-  },
-  scanlines: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor:
-      "linear-gradient(to bottom, rgba(255,255,255,0.03) 50%, transparent 50%)",
-    backgroundRepeat: "repeat",
-    backgroundSize: "100% 4px",
-  },
-  title: {
-    fontSize: 35,
-    fontWeight: "500",
-    textAlign: "center",
-    color: "white",
-    marginBottom: 60,
-  },
-  glowButton: {
-    width: "70%",
-    backgroundColor: "#dc143c",
-    borderRadius: 12,
-    height: 45,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 15,
-    shadowColor: "#FF00FF",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  outlineButton: {
-    width: "70%",
-    borderColor: "#00FFFF",
+
+  brandPlate: {
+    width: "80%",
     borderWidth: 2,
+    borderColor: RED,
     borderRadius: 12,
-    height: 45,
+    paddingVertical: 28,
+    alignItems: "center",
+    marginBottom: 80,
+    backgroundColor: "rgba(255, 26, 26, 0.03)",
+    // glow
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 18,
+  },
+  brandTitle: {
+    color: RED,
+    fontFamily: 'Orbitron_800ExtraBold',
+    fontSize: 40,
+    fontWeight: "800",
+    letterSpacing: 6,
+    textTransform: "uppercase",
+    textAlign: "center",
+    textShadowColor: RED,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+  },
+
+  neonButton: {
+    width: "70%",
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: RED,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 18,
+    // glow
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 14,
+    elevation: 12,
   },
-  buttonText: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "Courier",
+  neonButtonText: {
+    color: RED,
+    fontFamily: 'Orbitron_700Bold',
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 2,
   },
 });
 

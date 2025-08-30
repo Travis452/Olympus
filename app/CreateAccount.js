@@ -11,10 +11,13 @@ import { useNavigation } from "@react-navigation/native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
+import LoadingScreen from "../components/LoadingScreen";
 
 const CreateAccount = () => {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
   const [state, setState] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -23,7 +26,9 @@ const CreateAccount = () => {
 
   const handleSubmit = async () => {
     const { firstName, lastName, email, password } = state;
-    navigation.navigate('CreateProfile')
+    
+
+   
 
     try {
       if (email && password) {
@@ -39,59 +44,89 @@ const CreateAccount = () => {
           firstName,
           lastName,
           email,
+          username: state.username,
           completedWorkouts: 0,
         });
 
         // Redirect to CreateProfile instead of MainTabs
-        navigation.navigate("CreateProfile");
+        setLoading(true);
+        setTimeout(() => {
+          setLoading(false);
+          navigation.replace("AuthNavigation", {
+            screen: "CreateProfile"
+          }, 2500);
+        })
+
+        
         console.log(" User created and sent to CreateProfile screen");
       }
     } catch (err) {
       console.log("Got error:", err.message);
-    }
+    } 
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.title}>CREATE ACCOUNT</Text>
+
+      <LoadingScreen isVisible={loading} />
+
+      <View style={styles.inputView}>
+  <TextInput
+    style={styles.inputText}
+    placeholder="Username"
+    placeholderTextColor="rgba(255,255,255,0.6)"
+    value={state.username}
+    onChangeText={(value) => setState({ ...state, username: value })}
+    selectionColor="#ff0000"
+  />
+</View>
+
+
       <View style={styles.inputView}>
         <TextInput
           style={styles.inputText}
           placeholder="First Name"
-          placeholderTextColor="white"
+          placeholderTextColor="rgba(255,255,255,0.6)"
           value={state.firstName}
           onChangeText={(value) => setState({ ...state, firstName: value })}
+          selectionColor="#ff0000" 
         />
       </View>
       <View style={styles.inputView}>
         <TextInput
           style={styles.inputText}
           placeholder="Last Name"
-          placeholderTextColor="white"
+          placeholderTextColor="rgba(255,255,255,0.6)"
           value={state.lastName}
           onChangeText={(value) => setState({ ...state, lastName: value })}
+          selectionColor="#ff0000" 
         />
       </View>
       <View style={styles.inputView}>
         <TextInput
           style={styles.inputText}
           placeholder="Email"
-          placeholderTextColor="white"
+          placeholderTextColor="rgba(255,255,255,0.6)"
           value={state.email}
           onChangeText={(value) => setState({ ...state, email: value })}
+          selectionColor="#ff0000" 
         />
       </View>
       <View style={styles.inputView}>
         <TextInput
           style={styles.inputText}
           placeholder="Create Password"
-          placeholderTextColor="white"
+          placeholderTextColor="rgba(255,255,255,0.6)"
+          secureTextEntry
           value={state.password}
           onChangeText={(value) => setState({ ...state, password: value })}
+          selectionColor="#ff0000" 
         />
       </View>
+
       <TouchableOpacity onPress={handleSubmit} style={styles.glowBtn}>
-        <Text style={styles.glowText}>Sign Up</Text>
+        <Text style={styles.glowText}>SIGN UP</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -100,48 +135,61 @@ const CreateAccount = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 25,
-    fontWeight: "500",
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#ff0000",
     marginBottom: 40,
+    textAlign: "center",
+    textShadowColor: "#ff0000",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+    letterSpacing: 2,
+    fontFamily: "Orbitron_700Bold", // make sure Orbitron is loaded in App.js
   },
   inputView: {
-    width: "80%",
-    backgroundColor: "black",
-    borderRadius: 25,
+    width: "90%",
+    borderColor: "#ff0000",
+    borderWidth: 1.5,
+    borderRadius: 8,
     height: 50,
     marginBottom: 20,
     justifyContent: "center",
-    padding: 20,
+    paddingHorizontal: 15,
+    backgroundColor: "rgba(255,0,0,0.05)", // subtle glow background
   },
   inputText: {
-    height: 50,
     color: "white",
+    fontSize: 16,
+    fontFamily: "Orbitron_400Regular",
   },
   glowBtn: {
-    width: "80%",
-    backgroundColor: "#dc143c",
-    borderRadius: 25,
+    width: "90%",
+    borderWidth: 1.5,
+    borderColor: "#ff0000",
+    borderRadius: 8,
     height: 50,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 40,
-    marginBottom: 10,
-    shadowColor: "#ff69b4",
+    marginTop: 30,
+    shadowColor: "#ff0000",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
-    shadowRadius: 20,
+    shadowRadius: 15,
     elevation: 10,
   },
   glowText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "500",
+    color: "#ff0000",
+    fontSize: 20,
+    fontFamily: "Orbitron_700Bold",
+    letterSpacing: 2,
   },
 });
 
 export default CreateAccount;
+

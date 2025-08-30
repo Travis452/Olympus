@@ -7,8 +7,9 @@
     "name": "Olympus",
     "slug": "Olympus",
     "plugins": [
-      "expo-audio"
+      "expo-audio",
+      "expo-font"
     ],
-    "jsEngine": "jsc" 
+    "jsEngine": "jsc"
   }
 }

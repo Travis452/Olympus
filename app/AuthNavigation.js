@@ -5,25 +5,22 @@ import Login from "./Login";
 import CreateAccount from "./CreateAccount";
 import RetroLoadingScreen from "./RetroLoadingScreen";
 import CreateProfile from "./CreateProfile";
+import LoadingScreen from "../components/LoadingScreen";
 
 const Stack = createStackNavigator();
 
 const AuthNavigation = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen
-        name="RetroLoadingScreen"
-        component={RetroLoadingScreen}
+
+<Stack.Screen
+        name="Signup"
+        component={Signup}
         options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CreateProfile"
         component={CreateProfile}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Signup"
-        component={Signup}
         options={{ headerShown: false }}
       />
 

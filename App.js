@@ -9,11 +9,18 @@ import store, { persistor } from "./src/redux/store";
 import MainStackNavigator from "./app/MainStackNavigator";
 import AuthNavigation from "./app/AuthNavigation";
 import { db } from "./config/firebase"; 
-
+import { useFonts, Orbitron_400Regular, Orbitron_700Bold, Orbitron_800ExtraBold } from '@expo-google-fonts/orbitron';
 const App = () => {
   const [isAppLoading, setIsAppLoading] = useState(true); 
   const [currentUser, setCurrentUser] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    Orbitron_400Regular,
+    Orbitron_700Bold,
+    Orbitron_800ExtraBold,
+  });
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -27,7 +34,7 @@ const App = () => {
 
           if (docSnap.exists()) {
             const userData = docSnap.data();
-            setHasProfile(!!userData.username); // Profile created if username exists
+            setHasProfile(true); // Profile created if username exists
           } else {
             setHasProfile(false);
           }
@@ -45,6 +52,8 @@ const App = () => {
 
     return unsubscribe;
   }, []);
+
+  if (!fontsLoaded) return null;
 
   if (isAppLoading) {
     return (

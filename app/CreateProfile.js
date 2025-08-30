@@ -20,7 +20,6 @@ import {stopMusic} from '../utils/SoundManager';
 const CreateProfile = () => {
   const navigation = useNavigation();
   const [profile, setProfile] = useState({
-    username: "",
     weight: "",
     height: "",
     bestBench: "",
@@ -34,7 +33,6 @@ const CreateProfile = () => {
       if (user) {
         const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, {
-          ...profile,
           weight: parseInt(profile.weight),
           height: profile.height,
           bestBench: parseInt(profile.bestBench),
@@ -43,7 +41,7 @@ const CreateProfile = () => {
         }, {merge: true});
 
         await stopMusic();
-        navigation.navigate("MainTabs");
+        navigation.replace("MainTabs");
       }
     } catch (err) {
       console.error("Error saving profile:", err.message);
@@ -60,7 +58,6 @@ const CreateProfile = () => {
           <Text style={styles.title}>Create Profile</Text>
 
           {[
-            { placeholder: "Username", key: "username" },
             { placeholder: "Weight (lbs)", key: "weight" },
             { placeholder: "Height (e.g., 5'11)", key: "height" },
             { placeholder: "Best Bench (lbs)", key: "bestBench" },
@@ -100,46 +97,65 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#000", // black bg
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 25,
-    fontWeight: "500",
-    marginBottom: 40,
+    fontSize: 28,
+    color: "#ff1a1a", // neon red
+    marginBottom: 30,
+    letterSpacing: 3,
+    fontFamily: "Orbitron_700Bold", // matches your theme
+    textShadowColor: "#ff1a1a",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
   inputView: {
-    width: "80%",
-    backgroundColor: "black",
-    borderRadius: 25,
+    width: "90%",
+    borderColor: "#ff1a1a",
+    borderWidth: 2,
+    borderRadius: 12,
     height: 50,
     marginBottom: 20,
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
+    backgroundColor: "rgba(255, 26, 26, 0.07)", // subtle red tint
+    shadowColor: "#ff1a1a",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
   },
   inputText: {
     height: 50,
     color: "white",
+    fontFamily: "Orbitron_400Regular",
+    fontSize: 16,
+    selectionColor: "#ff1a1a", // red cursor
   },
   glowBtn: {
-    width: "80%",
-    backgroundColor: "#dc143c",
-    borderRadius: 25,
-    height: 50,
+    width: "90%",
+    borderColor: "#ff1a1a",
+    borderWidth: 2,
+    borderRadius: 12,
+    height: 52,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 40,
-    marginBottom: 10,
-    shadowColor: "#ff69b4",
+    marginTop: 30,
+    backgroundColor: "transparent",
+    shadowColor: "#ff1a1a",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 12,
   },
   glowText: {
-    color: "white",
+    color: "#ff1a1a",
     fontSize: 18,
-    fontWeight: "500",
+    fontFamily: "Orbitron_700Bold",
+    letterSpacing: 2,
   },
 });
+
 
 export default CreateProfile;
