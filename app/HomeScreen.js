@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Splits from '../components/Splits';
 import { SPLITS } from '../data/SPLITS';
+
 
 
 const HomeScreen = () => {
@@ -78,7 +79,13 @@ const HomeScreen = () => {
     ];
 
     return (
-        <SafeAreaView>
+<ImageBackground
+source={require ('../assets/images/HomeScreenBG.png')}
+style={styles.bg}
+resizeMode='cover'
+>
+        
+        <SafeAreaView style={styles.safeArea}>
 
             <FlatList
                 data={data}
@@ -114,10 +121,29 @@ const HomeScreen = () => {
             </ScrollView> */}
 
         </SafeAreaView>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
+
+    screen: {
+        flex: 1,
+        backgroundColor: 'black',
+        position: 'relative'
+    },
+
+    bg: {
+        flex:1,
+        
+        
+    },
+
+    safeArea: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        zIndex: 1
+    },
     titleContainer: {
         flex: 1,
         alignItems: 'left',
@@ -126,6 +152,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
+        backgroundColor: 'transparent'
     },
     customButton: {
 
