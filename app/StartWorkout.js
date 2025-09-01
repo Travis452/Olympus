@@ -35,7 +35,7 @@ import WorkoutTimer from "../components/WorkoutTimer";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
 import WorkoutSummary from "../components/WorkoutSummary";
-import LavaBackground from "../components/LavaBackground";
+
 
 const StartWorkout = ({ route }) => {
   const navigation = useNavigation();
@@ -309,9 +309,6 @@ const StartWorkout = ({ route }) => {
 
   return (
     <>
-    <View style={{flex:1}}>
-      <LavaBackground />
-    
       <LoadingScreen isVisible={loadingVisible} />
       <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
         <SafeAreaView style={styles.safeArea}>
@@ -455,12 +452,13 @@ const StartWorkout = ({ route }) => {
 />
 
       </ScrollView>
-      </View>
+
     </>
   );
 };
 
 const styles = StyleSheet.create({
+
   addButton: {
     backgroundColor: "#dc143c",
     padding: 10,
@@ -483,7 +481,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 0,
-    backgroundColor: "transparent",
+    
   },
   container: {
     flexGrow: 0,
