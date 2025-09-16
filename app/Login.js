@@ -10,6 +10,7 @@ const Login = () => {
     const navigation = useNavigation();
     const auth = getAuth();
 
+
     const [state, setState] = useState({
         email: '',
         password: '',
@@ -52,86 +53,130 @@ const Login = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-
-
-            <Text style={styles.title}>Login</Text>
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.inputText}
-                    placeholder='Email'
-                    onChangeText={(value) => setState({ ...state, email: value })}
-                />
-            </View>
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.inputText}
-
-                    placeholder='Password'
-                    onChangeText={(value) => setState({ ...state, password: value })}
-                />
-            </View>
-            <TouchableOpacity
-                onPress={onPressForgotPassword}>
-                <Text style={styles.forgot}>Forgot Password?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={onPressLogin}
-                style={styles.loginBtn}>
-                <Text style={styles.loginText}>LOGIN</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={onPressSignUp}>
-                <Text style={styles.forgot}>Signup</Text>
-            </TouchableOpacity>
-
+          <Text style={styles.title}>LOGIN</Text>
+    
+          <View style={styles.inputView}>
+            <TextInput
+              style={styles.inputText}
+              placeholder="Email"
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              autoCorrect={false}
+              value={state?.email}
+              onChangeText={(value) => setState({ ...state, email: value })}
+              selectionColor={RED}
+            />
+          </View>
+    
+          <View style={styles.inputView}>
+            <TextInput
+              style={styles.inputText}
+              placeholder="Password"
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              secureTextEntry
+              textContentType="password"
+              value={state?.password}
+              onChangeText={(value) => setState({ ...state, password: value })}
+              selectionColor={RED}
+              returnKeyType="done"
+            />
+          </View>
+    
+          <TouchableOpacity onPress={onPressForgotPassword}>
+            <Text style={styles.linkMuted}>Forgot Password?</Text>
+          </TouchableOpacity>
+    
+          <TouchableOpacity onPress={onPressLogin} style={styles.glowBtn}>
+            <Text style={styles.glowText}>LOG IN</Text>
+          </TouchableOpacity>
+    
+          <TouchableOpacity onPress={onPressSignUp} style={styles.secondaryLink}>
+            <Text style={styles.linkMuted}>Create Account</Text>
+          </TouchableOpacity>
         </SafeAreaView>
-    )
-}
-
-const styles = StyleSheet.create({
-    container: {
+      );
+    };
+    const RED = "#ff1a1a";
+    
+    const styles = StyleSheet.create({
+      container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backGroundColor: '#4FD3DA'
-    },
-    title: {
-        fontSize: 25,
-        fontWeight: '500',
-        marginBottom: 40
-    },
-    inputView: {
-        width: '80%',
-        backgroundColor: 'black',
-        borderRadius: 25,
-        height: 50,
-        marginBottom: 20,
-        justifyContent: 'center',
-        padding: 20
-    },
-    inputText: {
-        height: 50,
-        color: 'white'
-    },
-    forgotAndSignUpText: {
-        color: 'black',
-        fontSize: 11
-    },
-    loginBtn: {
-        width: '80%',
-        backgroundColor: '#dc143c',
-        borderRadius: 25,
-        height: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 40,
-        marginBottom: 10
-    },
-
-    loginText: {
-        color: 'white',
-    },
-
-})
-
-export default Login
+        backgroundColor: "#000",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 20,
+      },
+    
+      title: {
+        fontSize: 28,
+        color: RED,
+        marginBottom: 36,
+        letterSpacing: 2,
+        fontFamily: "Orbitron_700Bold",
+        textShadowColor: RED,
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 12,
+      },
+    
+      inputView: {
+        width: "90%",
+        borderColor: RED,
+        borderWidth: 1.5,
+        borderRadius: 10,
+        height: 52,
+        marginBottom: 18,
+        justifyContent: "center",
+        paddingHorizontal: 15,
+        backgroundColor: "rgba(255, 26, 26, 0.06)",
+        shadowColor: RED,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.7,
+        shadowRadius: 10,
+        elevation: 8,
+      },
+    
+      inputText: {
+        color: "white",
+        fontSize: 16,
+        fontFamily: "Orbitron_400Regular",
+      },
+    
+      linkMuted: {
+        color: "rgba(255,255,255,0.75)",
+        marginTop: 8,
+        fontFamily: "Orbitron_400Regular",
+        letterSpacing: 0.5,
+      },
+    
+      secondaryLink: {
+        marginTop: 14,
+      },
+    
+      glowBtn: {
+        width: "90%",
+        borderColor: RED,
+        borderWidth: 2,
+        borderRadius: 12,
+        height: 52,
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 28,
+        backgroundColor: "transparent",
+        shadowColor: RED,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 16,
+        elevation: 12,
+      },
+    
+      glowText: {
+        color: RED,
+        fontSize: 18,
+        fontFamily: "Orbitron_700Bold",
+        letterSpacing: 2,
+      },
+    });
+    
+    export default Login;
