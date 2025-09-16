@@ -1,55 +1,76 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card } from '@rneui/base';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { SPLITS } from '../data/SPLITS';
-import WorkoutCard from './WorkoutCard';
+// Splits.js
+import React from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { BlurView } from "expo-blur"; // 🔥 for glass effect
+import { SPLITS } from "../data/SPLITS";
 
 const Splits = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
 
-    const onPressSplit = (selectedSplitId) => {
+  const onPressSplit = (selectedSplitId) => {
+    navigation.navigate("WorkoutDetail", { selectedSplitId });
+  };
 
+  const renderSplit = ({ item }) => (
+    <TouchableOpacity onPress={() => onPressSplit(item.id)} activeOpacity={0.8}>
+      <View style={styles.cardWrapper}>
+        <BlurView intensity={40} tint="dark" style={styles.card}>
+          <Text style={styles.title}>{item.title}</Text>
+        </BlurView>
+      </View>
+    </TouchableOpacity>
+  );
 
-        navigation.navigate('WorkoutDetail', { selectedSplitId });
-
-    }
-    return (
-
-        <FlatList
-            data={SPLITS}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <TouchableOpacity
-                    style={styles.splitItem}
-                    onPress={() => onPressSplit(item.id)}>
-
-                    <Text style={styles.splitTitle}>{item.title}</Text>
-                </TouchableOpacity>
-            )}
-        />
-
-
-
-    )
-}
-
-
+  return (
+    <FlatList
+      data={SPLITS}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderSplit}
+      contentContainerStyle={styles.listPad}
+    />
+  );
+};
 
 const styles = StyleSheet.create({
-    cardContainer: {
-        width: '90%', // Adjust the width as needed
-        borderRadius: 10,
-        marginBottom: 5
-    },
-    splitItem: {
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc'
-    },
-    splitTitle: {
-        fontSize: 20
-    }
+  listPad: {
+    padding: 16,
+  },
+  cardWrapper: {
+    borderRadius: 28, // adjust as needed
+    overflow: "hidden", // 🔥 ensures blur respects the rounding
+    marginBottom: 16,
+    shadowColor: "#ff1a1a", // glow outside the wrapper
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 25,
+    elevation: 16,
+  },
+  card: {
+    backgroundColor: "rgba(20, 0, 0, 0.4)",
+    padding: 20,
+  },
+
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: 1,
+    color: "#ff1a1a",
+
+    // 🔥 glowing text
+    textShadowColor: "rgba(255, 0, 0, 0.8)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+
+    fontFamily: "Orbitron_700Bold", // swap if you don’t use Orbitron
+  },
 });
 
-export default Splits;             
+export default Splits;

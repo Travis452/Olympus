@@ -1,10 +1,6 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import useAuth from "../hooks/useAuth";
 
@@ -21,11 +17,14 @@ const Signup = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={["#000000", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#000000"]}
+      style={styles.gradient}
+    >
       {/* Neon OLYMPUS plate */}
-      <View style={styles.brandPlate}>
+      <TouchableOpacity style={styles.brandPlate} disabled>
         <Text style={styles.brandTitle}>OLYMPUS</Text>
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={onPressSignUp} style={styles.neonButton}>
         <Text style={styles.neonButtonText}>SIGN UP</Text>
@@ -34,16 +33,15 @@ const Signup = () => {
       <TouchableOpacity onPress={onPressLogin} style={styles.neonButton}>
         <Text style={styles.neonButtonText}>LOGIN</Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 };
 
 const RED = "#ff1a1a";
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: "#000", // solid black
     justifyContent: "center",
     alignItems: "center",
   },
@@ -57,24 +55,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 80,
     backgroundColor: "rgba(255, 26, 26, 0.03)",
-    // glow
+    // smaller glow
     shadowColor: RED,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 15,
-    elevation: 18,
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 10,
   },
   brandTitle: {
     color: RED,
-    fontFamily: 'Orbitron_800ExtraBold',
+    fontFamily: "Orbitron_800ExtraBold",
     fontSize: 40,
     fontWeight: "800",
     letterSpacing: 6,
     textTransform: "uppercase",
     textAlign: "center",
+    // smaller glow
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
+    textShadowRadius: 0,
   },
 
   neonButton: {
@@ -86,19 +85,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
-    // glow
+    // smaller glow
     shadowColor: RED,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 14,
-    elevation: 12,
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 8,
+    // added subtle button shadow for depth
+    backgroundColor: "rgba(0,0,0,0.7)",
   },
   neonButtonText: {
     color: RED,
-    fontFamily: 'Orbitron_700Bold',
+    fontFamily: "Orbitron_700Bold",
     fontSize: 18,
     fontWeight: "800",
     letterSpacing: 2,
+    textShadowColor: RED,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
 });
 
