@@ -35,10 +35,14 @@ const CreateProfile = () => {
         await setDoc(userRef, {
           weight: parseInt(profile.weight),
           height: profile.height,
-          bestBench: parseInt(profile.bestBench),
-          bestSquat: parseInt(profile.bestSquat),
-          bestDeadlift: parseInt(profile.bestDeadlift),
-        }, {merge: true});
+          baselineBench: parseInt(profile.bestBench),
+          baselineSquat: parseInt(profile.bestSquat),
+          baselineDeadlift: parseInt(profile.bestDeadlift),
+          bestBench: 0,       // reset bests
+          bestSquat: 0,
+          bestDeadlift: 0,
+        }, { merge: true });
+        
 
         await stopMusic();
         navigation.replace("MainTabs");

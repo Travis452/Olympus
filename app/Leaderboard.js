@@ -12,7 +12,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 const StrengthLeaderboard = () => {
-  const [selectedCategory, setSelectedCategory] = useState("bestBench");
+  const [selectedCategory, setSelectedCategory] = useState("verifiedBench");
   const [leaders, setLeaders] = useState([]);
 
   const categories = {
@@ -24,39 +24,28 @@ const StrengthLeaderboard = () => {
   useEffect(() => {
     const fetchLeaders = async () => {
       try {
-        const q = query(collection(db, "users"));
+        const q = query(
+          collection(db, "users"),
+          orderBy(selectedCategory, "desc")
+        );
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-
+  
+        // Only keep users who actually have this verified lift
         const filtered = data.filter((user) => user[selectedCategory]);
-
-        const userMaxMap = new Map();
-
-        filtered.forEach((user) => {
-          const existing = userMaxMap.get(user.username);
-          if (
-            !existing ||
-            user[selectedCategory] > existing[selectedCategory]
-          ) {
-            userMaxMap.set(user.username, user);
-          }
-        });
-
-        const uniqueHighScores = Array.from(userMaxMap.values()).sort(
-          (a, b) => b[selectedCategory] - a[selectedCategory]
-        );
-
-        setLeaders(uniqueHighScores);
+  
+        setLeaders(filtered);
       } catch (error) {
         console.error("Error fetching leaderboard:", error);
       }
     };
-
+  
     fetchLeaders();
   }, [selectedCategory]);
+  
 
   const renderItem = ({ item, index }) => {
     const imageUrl =

@@ -172,7 +172,7 @@ const [title, setTitle] = useState("Custom Workout"); // used in workoutData
         });
 
         console.log("💪 Updating user stats with:", newStats);
-        await updateUserStats(currentUser.uid, newStats);
+        await updateUserStats(currentUser.uid, newStats, isVerified);
 
         if (expResult) {
           const newEXP = expResult.exp;
@@ -276,7 +276,7 @@ const [title, setTitle] = useState("Custom Workout"); // used in workoutData
             </TouchableOpacity>
           </View>
         ))}
-        
+
         <View style={styles.addButtonContainer}>
           <TouchableOpacity onPress={openModal} style={styles.addButton}>
             <Text style={styles.addButtonText}>Add Exercise</Text>

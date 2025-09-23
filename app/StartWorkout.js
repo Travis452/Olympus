@@ -240,7 +240,7 @@ const StartWorkout = ({ route }) => {
         });
 
         console.log("💪 Updating user stats with:", newStats);
-        await updateUserStats(currentUser.uid, newStats);
+        await updateUserStats(currentUser.uid, newStats, isVerified);
 
         if (expResult) {
           const newEXP = expResult.exp;

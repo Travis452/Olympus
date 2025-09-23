@@ -120,7 +120,7 @@ const getPreviousWorkout = async (userId, exerciseTitle) => {
   }
 };
 
-export const updateUserStats = async (userId, stats) => {
+export const updateUserStats = async (userId, stats, isVerified = false) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -133,17 +133,28 @@ export const updateUserStats = async (userId, stats) => {
     const userData = userSnap.data();
     let updatedStats = {};
 
+    // Bench
     if (stats.bestBench && stats.bestBench > (userData.bestBench || 0)) {
       updatedStats.bestBench = stats.bestBench;
+      if (isVerified && stats.bestBench > (userData.verifiedBench || 0)) {
+        updatedStats.verifiedBench = stats.bestBench;
+      }
     }
+
+    // Squat
     if (stats.bestSquat && stats.bestSquat > (userData.bestSquat || 0)) {
       updatedStats.bestSquat = stats.bestSquat;
+      if (isVerified && stats.bestSquat > (userData.verifiedSquat || 0)) {
+        updatedStats.verifiedSquat = stats.bestSquat;
+      }
     }
-    if (
-      stats.bestDeadlift &&
-      stats.bestDeadlift > (userData.bestDeadlift || 0)
-    ) {
+
+    // Deadlift
+    if (stats.bestDeadlift && stats.bestDeadlift > (userData.bestDeadlift || 0)) {
       updatedStats.bestDeadlift = stats.bestDeadlift;
+      if (isVerified && stats.bestDeadlift > (userData.verifiedDeadlift || 0)) {
+        updatedStats.verifiedDeadlift = stats.bestDeadlift;
+      }
     }
 
     if (Object.keys(updatedStats).length > 0) {
@@ -156,6 +167,7 @@ export const updateUserStats = async (userId, stats) => {
     console.error("Error updating user PR stats:", error);
   }
 };
+
 
 //  Update User EXP & Level
 export const updateUserEXP = async (userId, expToAdd) => {
@@ -263,22 +275,38 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     let totalEXP = 0;
     let requiresVerification = false;
 
+    // Pull stored PRs from the user profile (or 0 if none exist yet)
+    const { bestBench = 0, bestSquat = 0, bestDeadlift = 0 } = userData;
+
     for (const exercise of exercises) {
       const { title, sets } = exercise;
       const liftType = EXERCISE_TAGS[title];
 
+      // Skip if this exercise isn’t tagged (not a tracked PR lift)
+      if (!liftType) continue;
+
+      // Compare against stored PRs to prevent baseline EXP
+      let currentBest = 0;
+      if (liftType === "bench") currentBest = bestBench;
+      if (liftType === "squat") currentBest = bestSquat;
+      if (liftType === "deadlift") currentBest = bestDeadlift;
+
       // Fetch previous workout data
       const previousWorkout = await getPreviousWorkout(userId, title);
-      let prevWeight = previousWorkout
-        ? parseFloat(previousWorkout.lbs || 0)
-        : 0;
+      let prevWeight = previousWorkout ? parseFloat(previousWorkout.lbs || 0) : 0;
       let prevReps = previousWorkout ? parseInt(previousWorkout.reps || 0) : 0;
 
       for (const set of sets) {
         const weight = parseFloat(set.lbs || 0);
         const reps = parseInt(set.reps || 0);
 
-        // Add EXP for progressive overload
+        // 🚫 Skip EXP if this set doesn’t beat stored PR
+        if (weight <= currentBest) {
+          console.log(`Skipping EXP for ${title} - ${weight} lbs (<= current PR ${currentBest})`);
+          continue;
+        }
+
+        // ✅ Add EXP for progressive overload
         const overloadEXP = calculateProgressiveOverloadEXP(
           prevWeight,
           prevReps,
@@ -287,31 +315,19 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
         );
         totalEXP += overloadEXP;
 
-        // Benchmark Check
+        // ✅ Benchmark Check
         if (STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
           totalEXP += 250;
           requiresVerification = true;
-          console.log(
-            `🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`
-          );
+          console.log(`🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`);
         }
       }
     }
 
-    totalEXP *= getStrengthMultiplier(
-      exercises[0]?.sets[0]?.lbs || 0,
-      bodyWeight
-    );
-
-    if (requiresVerification && !isVerified)
-      return { exp, level, verificationRequired: true };
-
     exp += totalEXP;
     await updateDoc(userRef, { exp, level });
 
-    console.log(
-      `User ${userId} gained ${totalEXP} EXP. New Level: ${level}`
-    );
+    console.log(`User ${userId} gained ${totalEXP} EXP. New Level: ${level}`);
     return { exp, level };
   } catch (error) {
     console.error("Error awarding EXP:", error);
