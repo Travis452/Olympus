@@ -7,6 +7,8 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
+  Modal,
 } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
@@ -28,8 +30,45 @@ const Profile = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userStats, setUserStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editData, setEditData] = useState({
+  username: "",
+  height: "",
+  weight: "",
+});
+
 
   const isFocused = useIsFocused();
+
+  const openEditModal = () => {
+    setEditData({
+      username: userStats.username || "",
+      height: userStats.height || "",
+      weight: userStats.weight?.toString() || "",
+    });
+    setEditModalVisible(true);
+  };
+
+  const saveProfileUpdates = async () => {
+    if (!editData.username || !editData.height || !editData.weight) {
+      alert("All fields are required");
+      return;
+    }
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        username: editData.username,
+        height: editData.height,
+        weight: parseInt(editData.weight) || 0,
+      });
+      await fetchUserStats(user.uid);
+      setEditModalVisible(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+  
+  
 
   useEffect(() => {
     if (user) {
@@ -195,6 +234,74 @@ const Profile = () => {
             Best Deadlift: {userStats.bestDeadlift || 0} lbs
           </Text>
         </View>
+
+        <TouchableOpacity
+  style={{ marginTop: 15, backgroundColor: "#dc143c", padding: 12, borderRadius: 8 }}
+  onPress={openEditModal}
+>
+  <Text style={{ color: "white", textAlign: "center", fontWeight: "bold" }}>
+    Edit Profile
+  </Text>
+</TouchableOpacity>
+
+<Modal
+  visible={editModalVisible}
+  animationType="slide"
+  transparent={true}
+  onRequestClose={() => setEditModalVisible(false)}
+>
+  <View style={{
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)"
+  }}>
+    <View style={{
+      width: "85%",
+      backgroundColor: "white",
+      padding: 20,
+      borderRadius: 10
+    }}>
+      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>Edit Profile</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        value={editData.username}
+        onChangeText={(text) => setEditData({ ...editData, username: text })}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Height"
+        value={editData.height}
+        onChangeText={(text) => setEditData({ ...editData, height: text })}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Weight (lbs)"
+        keyboardType="numeric"
+        value={editData.weight}
+        onChangeText={(text) => setEditData({ ...editData, weight: text })}
+      />
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
+        <TouchableOpacity
+          style={{ flex: 1, marginRight: 10, backgroundColor: "#ccc", padding: 12, borderRadius: 8 }}
+          onPress={() => setEditModalVisible(false)}
+        >
+          <Text style={{ textAlign: "center" }}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ flex: 1, marginLeft: 10, backgroundColor: "#dc143c", padding: 12, borderRadius: 8 }}
+          onPress={saveProfileUpdates}
+        >
+          <Text style={{ textAlign: "center", color: "white", fontWeight: "bold" }}>Save</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
       </SafeAreaView>
     </ScrollView>
   );
@@ -296,6 +403,14 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 16,
     marginVertical: 5,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
   },
 });
 

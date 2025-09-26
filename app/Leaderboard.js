@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,13 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 const StrengthLeaderboard = () => {
-  const [selectedCategory, setSelectedCategory] = useState("verifiedBench");
+  const [selectedCategory, setSelectedCategory] = useState("bestBench");
   const [leaders, setLeaders] = useState([]);
 
   const categories = {
@@ -21,30 +22,35 @@ const StrengthLeaderboard = () => {
     bestDeadlift: "Deadlift",
   };
 
-  useEffect(() => {
-    const fetchLeaders = async () => {
-      try {
-        const q = query(
-          collection(db, "users"),
-          orderBy(selectedCategory, "desc")
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+
+
   
-        // Only keep users who actually have this verified lift
-        const filtered = data.filter((user) => user[selectedCategory]);
+
   
-        setLeaders(filtered);
-      } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const fetchLeaders = async () => {
+        try {
+          const q = query(
+            collection(db, "users"),
+            orderBy(selectedCategory, "desc")
+          );
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
   
-    fetchLeaders();
-  }, [selectedCategory]);
+          const filtered = data.filter((user) => user[selectedCategory]);
+          setLeaders(filtered);
+        } catch (error) {
+          console.error("Error fetching leaderboard:", error);
+        }
+      };
+  
+      fetchLeaders();
+    }, [selectedCategory])
+  );
   
 
   const renderItem = ({ item, index }) => {

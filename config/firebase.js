@@ -275,63 +275,70 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     let totalEXP = 0;
     let requiresVerification = false;
 
-    // Pull stored PRs from the user profile (or 0 if none exist yet)
-    const { bestBench = 0, bestSquat = 0, bestDeadlift = 0 } = userData;
+    // 🏆 First workout ever = flat bonus
+    const isFirstWorkout =
+      !userData.completedWorkouts || userData.completedWorkouts === 0;
+    if (isFirstWorkout) {
+      totalEXP += 100;
+      console.log("🏆 First workout bonus: +100 EXP");
+    }
 
     for (const exercise of exercises) {
       const { title, sets } = exercise;
-      const liftType = EXERCISE_TAGS[title];
-
-      // Skip if this exercise isn’t tagged (not a tracked PR lift)
-      if (!liftType) continue;
-
-      // Compare against stored PRs to prevent baseline EXP
-      let currentBest = 0;
-      if (liftType === "bench") currentBest = bestBench;
-      if (liftType === "squat") currentBest = bestSquat;
-      if (liftType === "deadlift") currentBest = bestDeadlift;
-
-      // Fetch previous workout data
+      const liftType = EXERCISE_TAGS[title]; // defined only for Big 3
+    
+      // Get last logged workout for this exercise
       const previousWorkout = await getPreviousWorkout(userId, title);
       let prevWeight = previousWorkout ? parseFloat(previousWorkout.lbs || 0) : 0;
       let prevReps = previousWorkout ? parseInt(previousWorkout.reps || 0) : 0;
-
+    
       for (const set of sets) {
         const weight = parseFloat(set.lbs || 0);
         const reps = parseInt(set.reps || 0);
-
-        // 🚫 Skip EXP if this set doesn’t beat stored PR
-        if (weight <= currentBest) {
-          console.log(`Skipping EXP for ${title} - ${weight} lbs (<= current PR ${currentBest})`);
-          continue;
+    
+        if (!previousWorkout) {
+          // ✅ First time doing THIS lift → reps-based EXP
+          const baseEXP = reps * 2;
+          totalEXP += baseEXP;
+          console.log(`🆕 First time doing ${title}: +${baseEXP} EXP`);
+        } else {
+          // ✅ Progressive overload
+          const overloadEXP = calculateProgressiveOverloadEXP(
+            prevWeight,
+            prevReps,
+            weight,
+            reps
+          );
+          totalEXP += overloadEXP;
         }
-
-        // ✅ Add EXP for progressive overload
-        const overloadEXP = calculateProgressiveOverloadEXP(
-          prevWeight,
-          prevReps,
-          weight,
-          reps
-        );
-        totalEXP += overloadEXP;
-
-        // ✅ Benchmark Check
-        if (STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
+    
+        // 🏆 Big 3: only these get benchmark checks + leaderboard relevance
+        if (liftType && STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
           totalEXP += 250;
           requiresVerification = true;
-          console.log(`🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`);
+          console.log(
+            `🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`
+          );
         }
       }
     }
+    
 
     exp += totalEXP;
-    await updateDoc(userRef, { exp, level });
 
-    console.log(`User ${userId} gained ${totalEXP} EXP. New Level: ${level}`);
+    await updateDoc(userRef, {
+      exp,
+      level,
+      completedWorkouts: (userData.completedWorkouts || 0) + 1,
+    });
+
+    console.log(`User ${userId} gained ${totalEXP} EXP. New total: ${exp}`);
     return { exp, level };
   } catch (error) {
     console.error("Error awarding EXP:", error);
   }
 };
+
+
 
 export { auth, db, storage };
