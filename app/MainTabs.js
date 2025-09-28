@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HomeScreen from "./HomeScreen";
 import Profile from "./Profile";
 import Leaderboard from "./Leaderboard";
+import WorkoutHistory from "./WorkoutHistory";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -87,6 +89,18 @@ const MainTabs = ({ route }) => {
           ),
         }}
       />
+
+<Tab.Screen
+  name="WorkoutHistory"
+  component={WorkoutHistory}
+  options={{
+    tabBarLabel: "History",
+    tabBarIcon: ({ color, size }) => (
+      <MaterialCommunityIcons name="history" color={color} size={26} />
+    ),
+  }}
+/>
+
     </Tab.Navigator>
   );
 };
