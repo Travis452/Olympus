@@ -14,12 +14,15 @@ import { useIsFocused } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db, storage } from "../config/firebase";
+
+const RED = "#ff1a1a";
 
 const Profile = () => {
   const { user, completedWorkouts } = useAuth();
@@ -32,11 +35,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editData, setEditData] = useState({
-  username: "",
-  height: "",
-  weight: "",
-});
-
+    username: "",
+    height: "",
+    weight: "",
+  });
 
   const isFocused = useIsFocused();
 
@@ -67,8 +69,6 @@ const Profile = () => {
       console.error("Error updating profile:", error);
     }
   };
-  
-  
 
   useEffect(() => {
     if (user) {
@@ -111,7 +111,6 @@ const Profile = () => {
 
   const uploadImage = async (uri) => {
     if (!uri) return;
-
     setUploading(true);
 
     try {
@@ -154,22 +153,22 @@ const Profile = () => {
     if (currentUser && isFocused) {
       dispatch(fetchUserEXP(currentUser.uid))
         .unwrap()
-        .then((data) => {
-          console.log("✅ Updated EXP fetched:", data.exp);
-        })
         .catch((err) => {
           console.error("❌ Failed to fetch EXP:", err);
         });
 
-      fetchUserStats(currentUser.uid); // keep this if you still want additional stats
+      fetchUserStats(currentUser.uid);
     }
   }, [currentUser, isFocused]);
 
   if (!user) {
     return (
-      <View style={styles.container}>
-        <Text>No user logged in</Text>
-      </View>
+      <LinearGradient
+        colors={["#000", "#1a1a1a", "#000"]}
+        style={styles.gradient}
+      >
+        <Text style={styles.emptyText}>No user logged in</Text>
+      </LinearGradient>
     );
   }
 
@@ -177,240 +176,302 @@ const Profile = () => {
   const progressWidth = `${(expProgress / 1000) * 100}%`;
 
   return (
-    <ScrollView style={styles.container}>
-      <SafeAreaView styles={styles.safeArea}>
-        <View>
-          <Text style={styles.title}>Profile</Text>
-        </View>
-        <View style={styles.user}>
-          <TouchableOpacity onPress={pickImage}>
-            {uploading ? (
-              <ActivityIndicator size="large" color="#dc143c" />
-            ) : (
-              <Image
-                source={
-                  profilePic
-                    ? { uri: profilePic }
-                    : require("../assets/images/default-profile.jpg")
-                }
-                style={styles.image}
-                resizeMode="cover"
-              />
-            )}
-          </TouchableOpacity>
-          <View style={styles.userInfo}>
-            <Text style={styles.username}>{user.firstName || ""}</Text>
-            <Text style={styles.completedWorkoutsText}>
-              {completedWorkouts} Workouts
+    <LinearGradient
+      colors={["#000", "#1a1a1a", "#000"]}
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+        <SafeAreaView>
+          <Text style={styles.title}>PROFILE</Text>
+
+          {/* Profile Picture */}
+          <View style={styles.user}>
+            <TouchableOpacity onPress={pickImage}>
+              {uploading ? (
+                <ActivityIndicator size="large" color={RED} />
+              ) : (
+                <Image
+                  source={
+                    profilePic
+                      ? { uri: profilePic }
+                      : require("../assets/images/default-profile.jpg")
+                  }
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              )}
+            </TouchableOpacity>
+            <View style={styles.userInfo}>
+              <Text style={styles.username}>
+                {userStats.username || user.firstName || "User"}
+              </Text>
+              <Text style={styles.completedWorkoutsText}>
+                {completedWorkouts} Workouts
+              </Text>
+            </View>
+          </View>
+
+          {/* EXP + Level */}
+          <View style={styles.levelContainer}>
+            <Text style={styles.levelText}>Level {level}</Text>
+            <View style={styles.expBarContainer}>
+              <View style={[styles.expBar, { width: progressWidth }]} />
+            </View>
+            <Text style={styles.expText}>{exp} / 1000 EXP</Text>
+          </View>
+
+          {/* Stats */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>STATS</Text>
+            <Text style={styles.statText}>
+              Height: {userStats.height || "Not set"}
+            </Text>
+            <Text style={styles.statText}>
+              Weight: {userStats.weight || "Not set"} lbs
+            </Text>
+            <Text style={styles.statText}>
+              Best Bench: {userStats.bestBench || 0} lbs
+            </Text>
+            <Text style={styles.statText}>
+              Best Squat: {userStats.bestSquat || 0} lbs
+            </Text>
+            <Text style={styles.statText}>
+              Best Deadlift: {userStats.bestDeadlift || 0} lbs
             </Text>
           </View>
-        </View>
 
-        <View style={styles.levelContainer}>
-          <Text style={styles.levelText}>Level: {level}</Text>
-          <View style={styles.expBarContainer}>
-            <View style={[styles.expBar, { width: progressWidth }]} />
-          </View>
-          <Text style={styles.expText}>{exp} / 1000 EXP</Text>
-        </View>
+          {/* Edit Button */}
+          <TouchableOpacity style={styles.neonButton} onPress={openEditModal}>
+            <Text style={styles.neonButtonText}>EDIT PROFILE</Text>
+          </TouchableOpacity>
 
-        <View style={styles.profileCard}>
-          <Text style={styles.headerText}>Profile Stats</Text>
-          <Text style={styles.statText}>Level: {userStats.level || 1}</Text>
-          <Text style={styles.statText}>EXP: {userStats.exp || 0}</Text>
-          <Text style={styles.statText}>
-            Height: {userStats.height || "Not set"}
-          </Text>
-          <Text style={styles.statText}>
-            Weight: {userStats.weight || "Not set"} lbs
-          </Text>
-          <Text style={styles.statText}>
-            Best Bench: {userStats.bestBench || 0} lbs
-          </Text>
-          <Text style={styles.statText}>
-            Best Squat: {userStats.bestSquat || 0} lbs
-          </Text>
-          <Text style={styles.statText}>
-            Best Deadlift: {userStats.bestDeadlift || 0} lbs
-          </Text>
-        </View>
+          {/* Edit Modal */}
+          <Modal
+            visible={editModalVisible}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setEditModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Edit Profile</Text>
 
-        <TouchableOpacity
-  style={{ marginTop: 15, backgroundColor: "#dc143c", padding: 12, borderRadius: 8 }}
-  onPress={openEditModal}
->
-  <Text style={{ color: "white", textAlign: "center", fontWeight: "bold" }}>
-    Edit Profile
-  </Text>
-</TouchableOpacity>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#888"
+                  value={editData.username}
+                  onChangeText={(text) =>
+                    setEditData({ ...editData, username: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Height"
+                  placeholderTextColor="#888"
+                  value={editData.height}
+                  onChangeText={(text) =>
+                    setEditData({ ...editData, height: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Weight (lbs)"
+                  placeholderTextColor="#888"
+                  keyboardType="numeric"
+                  value={editData.weight}
+                  onChangeText={(text) =>
+                    setEditData({ ...editData, weight: text })
+                  }
+                />
 
-<Modal
-  visible={editModalVisible}
-  animationType="slide"
-  transparent={true}
-  onRequestClose={() => setEditModalVisible(false)}
->
-  <View style={{
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)"
-  }}>
-    <View style={{
-      width: "85%",
-      backgroundColor: "white",
-      padding: 20,
-      borderRadius: 10
-    }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>Edit Profile</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={editData.username}
-        onChangeText={(text) => setEditData({ ...editData, username: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Height"
-        value={editData.height}
-        onChangeText={(text) => setEditData({ ...editData, height: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Weight (lbs)"
-        keyboardType="numeric"
-        value={editData.weight}
-        onChangeText={(text) => setEditData({ ...editData, weight: text })}
-      />
-
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
-        <TouchableOpacity
-          style={{ flex: 1, marginRight: 10, backgroundColor: "#ccc", padding: 12, borderRadius: 8 }}
-          onPress={() => setEditModalVisible(false)}
-        >
-          <Text style={{ textAlign: "center" }}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{ flex: 1, marginLeft: 10, backgroundColor: "#dc143c", padding: 12, borderRadius: 8 }}
-          onPress={saveProfileUpdates}
-        >
-          <Text style={{ textAlign: "center", color: "white", fontWeight: "bold" }}>Save</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
-      </SafeAreaView>
-    </ScrollView>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.neonButton,
+                      {
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        borderColor: "#888",
+                      },
+                    ]}
+                    onPress={() => setEditModalVisible(false)}
+                  >
+                    <Text style={styles.neonButtonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.neonButton}
+                    onPress={saveProfileUpdates}
+                  >
+                    <Text style={styles.neonButtonText}>SAVE</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </SafeAreaView>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 0,
+  gradient: {
+    flex: 1,
     padding: 20,
-    paddingTop: 0,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderWidth: 1,
-    borderRadius: 50,
-    marginTop: 20,
-    backgroundColor: "lightgrey",
   },
   title: {
-    textAlignVertical: "top",
-    textAlign: "left",
-    fontSize: 35,
-    fontWeight: "700",
-    margin: 15,
-    marginTop: 40,
-    marginLeft: 5,
-  },
-  safeArea: {
-    flex: 0,
+    fontSize: 32,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    marginVertical: 20,
+    textShadowColor: RED,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    letterSpacing: 4,
   },
   user: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 20,
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: RED,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   userInfo: {
-    flexDirection: "column",
+    marginLeft: 15,
   },
   username: {
-    marginTop: 30,
-    marginLeft: 15,
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#fff",
   },
   completedWorkoutsText: {
-    fontSize: 20,
-    fontWeight: "300",
-    marginLeft: 20,
+    fontSize: 16,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 4,
   },
   levelContainer: {
-    marginTop: 20,
     alignItems: "center",
+    marginBottom: 25,
   },
   levelText: {
-    fontSize: 22,
+    fontSize: 20,
+    color: "#fff",
     fontWeight: "bold",
   },
   expBarContainer: {
     width: "80%",
-    height: 10,
-    backgroundColor: "#ccc",
-    borderRadius: 5,
+    height: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 6,
     overflow: "hidden",
-    marginTop: 10,
+    marginVertical: 10,
   },
   expBar: {
     height: "100%",
-    backgroundColor: "#dc143c",
+    backgroundColor: RED,
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
   },
   expText: {
-    marginTop: 5,
-    fontSize: 16,
-    fontWeight: "bold",
+    color: "#fff",
+    fontWeight: "600",
   },
-
-  //Stats Section
-
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
+  card: {
+    backgroundColor: "rgba(255,26,26,0.05)",
+    borderColor: RED,
+    borderWidth: 1,
+    borderRadius: 12,
     padding: 20,
-  },
-  profileCard: {
-    backgroundColor: "#f8f8f8",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
     marginBottom: 20,
+    shadowColor: RED,
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardTitle: {
+    color: RED,
+    fontSize: 20,
+    fontFamily: "Orbitron_700Bold",
+    marginBottom: 12,
     textAlign: "center",
+    textShadowColor: RED,
+    textShadowRadius: 5,
   },
   statText: {
+    color: "#fff",
     fontSize: 16,
-    marginVertical: 5,
+    marginBottom: 6,
   },
-
+  neonButton: {
+    width: "70%",
+    alignSelf: "center",
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginVertical: 12,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  neonButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 16,
+    letterSpacing: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: RED,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    marginBottom: 20,
+  },
   input: {
+    backgroundColor: "#000",
+    color: "#fff",
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
+    borderColor: "#555",
     borderRadius: 8,
-    marginBottom: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  emptyText: {
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 40,
   },
 });
 
