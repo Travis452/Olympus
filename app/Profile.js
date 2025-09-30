@@ -215,8 +215,13 @@ const Profile = () => {
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>Level {level}</Text>
             <View style={styles.expBarContainer}>
-              <View style={[styles.expBar, { width: progressWidth }]} />
+              {/* Grey background (empty bar) */}
+              <View style={styles.expBarBackground} />
+
+              {/* Red foreground (progress) */}
+              <View style={[styles.expBarFill, { width: "0%" }]} />
             </View>
+
             <Text style={styles.expText}>{exp} / 1000 EXP</Text>
           </View>
 
@@ -368,19 +373,21 @@ const styles = StyleSheet.create({
   expBarContainer: {
     width: "80%",
     height: 12,
-    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 6,
     overflow: "hidden",
-    marginVertical: 10,
+    backgroundColor: "transparent",
+    marginTop: 10,
+    position: "relative",
   },
-  expBar: {
+  expBarBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.2)", // grey/empty bar
+  },
+  expBarFill: {
     height: "100%",
-    backgroundColor: RED,
-    shadowColor: RED,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
+    backgroundColor: "#ff1a1a", // red fill
   },
+
   expText: {
     color: "#fff",
     fontWeight: "600",

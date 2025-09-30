@@ -4,12 +4,12 @@ import { View, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Home, User, Trophy, History } from "lucide-react-native";
 
 import HomeScreen from "./HomeScreen";
 import Profile from "./Profile";
 import Leaderboard from "./Leaderboard";
 import WorkoutHistory from "./WorkoutHistory";
-
 
 const Tab = createBottomTabNavigator();
 
@@ -66,41 +66,32 @@ const MainTabs = ({ route }) => {
         component={HomeScreen}
         options={{
           tabBarLabel: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home" color={color} size={26} />
-          ),
+          tabBarIcon: ({ color, size }) => <Home color={color} size={26} />,
         }}
       />
       <Tab.Screen
         name="Profile"
         component={Profile}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account" color={color} size={26} />
-          ),
+          tabBarIcon: ({ color, size }) => <User color={color} size={26} />,
         }}
       />
       <Tab.Screen
         name="Leaderboard"
         component={Leaderboard}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="trophy" color={color} size={26} />
-          ),
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={26} />,
         }}
       />
 
-<Tab.Screen
-  name="WorkoutHistory"
-  component={WorkoutHistory}
-  options={{
-    tabBarLabel: "History",
-    tabBarIcon: ({ color, size }) => (
-      <MaterialCommunityIcons name="history" color={color} size={26} />
-    ),
-  }}
-/>
-
+      <Tab.Screen
+        name="WorkoutHistory"
+        component={WorkoutHistory}
+        options={{
+          tabBarLabel: "History",
+          tabBarIcon: ({ color, size }) => <History color={color} size={26} />,
+        }}
+      />
     </Tab.Navigator>
   );
 };

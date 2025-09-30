@@ -6,6 +6,11 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -26,9 +31,6 @@ const CreateAccount = () => {
 
   const handleSubmit = async () => {
     const { firstName, lastName, email, password } = state;
-    
-
-   
 
     try {
       if (email && password) {
@@ -39,7 +41,6 @@ const CreateAccount = () => {
         );
         const user = userCredential.user;
 
-        // Save base user info to Firestore
         await setDoc(doc(db, "users", user.uid), {
           firstName,
           lastName,
@@ -48,87 +49,65 @@ const CreateAccount = () => {
           completedWorkouts: 0,
         });
 
-        // Redirect to CreateProfile instead of MainTabs
         setLoading(true);
         setTimeout(() => {
           setLoading(false);
           navigation.replace("AuthNavigation", {
-            screen: "CreateProfile"
-          }, 2500);
-        })
+            screen: "CreateProfile",
+          });
+        }, 2500);
 
-        
-        console.log(" User created and sent to CreateProfile screen");
+        console.log("✅ User created and sent to CreateProfile screen");
       }
     } catch (err) {
-      console.log("Got error:", err.message);
-    } 
+      console.log("❌ Got error:", err.message);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>CREATE ACCOUNT</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: "black" }}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <SafeAreaView style={styles.container}>
+          <LoadingScreen isVisible={loading} />
 
-      <LoadingScreen isVisible={loading} />
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.title}>CREATE ACCOUNT</Text>
 
-      <View style={styles.inputView}>
-  <TextInput
-    style={styles.inputText}
-    placeholder="Username"
-    placeholderTextColor="rgba(255,255,255,0.6)"
-    value={state.username}
-    onChangeText={(value) => setState({ ...state, username: value })}
-    selectionColor="#ff0000"
-  />
-</View>
+            {[
+              { placeholder: "Username", key: "username" },
+              { placeholder: "First Name", key: "firstName" },
+              { placeholder: "Last Name", key: "lastName" },
+              { placeholder: "Email", key: "email" },
+              { placeholder: "Create Password", key: "password", secure: true },
+            ].map(({ placeholder, key, secure }) => (
+              <View key={key} style={styles.inputView}>
+                <TextInput
+                  style={styles.inputText}
+                  placeholder={placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.6)"
+                  secureTextEntry={secure || false}
+                  value={state[key]}
+                  onChangeText={(value) => setState({ ...state, [key]: value })}
+                  selectionColor="#ff0000"
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+            ))}
 
-
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.inputText}
-          placeholder="First Name"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          value={state.firstName}
-          onChangeText={(value) => setState({ ...state, firstName: value })}
-          selectionColor="#ff0000" 
-        />
-      </View>
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.inputText}
-          placeholder="Last Name"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          value={state.lastName}
-          onChangeText={(value) => setState({ ...state, lastName: value })}
-          selectionColor="#ff0000" 
-        />
-      </View>
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.inputText}
-          placeholder="Email"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          value={state.email}
-          onChangeText={(value) => setState({ ...state, email: value })}
-          selectionColor="#ff0000" 
-        />
-      </View>
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.inputText}
-          placeholder="Create Password"
-          placeholderTextColor="rgba(255,255,255,0.6)"
-          secureTextEntry
-          value={state.password}
-          onChangeText={(value) => setState({ ...state, password: value })}
-          selectionColor="#ff0000" 
-        />
-      </View>
-
-      <TouchableOpacity onPress={handleSubmit} style={styles.glowBtn}>
-        <Text style={styles.glowText}>SIGN UP</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+            <TouchableOpacity onPress={handleSubmit} style={styles.glowBtn}>
+              <Text style={styles.glowText}>SIGN UP</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -136,9 +115,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
-    justifyContent: "center",
+  },
+  scrollContent: {
     alignItems: "center",
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingBottom: 100, // ensures space above keyboard
   },
   title: {
     fontSize: 28,
@@ -150,10 +132,10 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 15,
     letterSpacing: 2,
-    fontFamily: "Orbitron_700Bold", // make sure Orbitron is loaded in App.js
+    fontFamily: "Orbitron_700Bold",
   },
   inputView: {
-    width: "90%",
+    width: "80%",
     borderColor: "#ff0000",
     borderWidth: 1.5,
     borderRadius: 8,
@@ -161,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     justifyContent: "center",
     paddingHorizontal: 15,
-    backgroundColor: "rgba(255,0,0,0.05)", // subtle glow background
+    backgroundColor: "rgba(255,0,0,0.05)",
   },
   inputText: {
     color: "white",
@@ -169,7 +151,7 @@ const styles = StyleSheet.create({
     fontFamily: "Orbitron_400Regular",
   },
   glowBtn: {
-    width: "90%",
+    width: "80%",
     borderWidth: 1.5,
     borderColor: "#ff0000",
     borderRadius: 8,
@@ -192,4 +174,3 @@ const styles = StyleSheet.create({
 });
 
 export default CreateAccount;
-

@@ -10,12 +10,13 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
-import {stopMusic} from '../utils/SoundManager';
+import { stopMusic } from "../utils/SoundManager";
 
 const CreateProfile = () => {
   const navigation = useNavigation();
@@ -32,17 +33,20 @@ const CreateProfile = () => {
       const user = getAuth().currentUser;
       if (user) {
         const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-          weight: parseInt(profile.weight),
-          height: profile.height,
-          baselineBench: parseInt(profile.bestBench),
-          baselineSquat: parseInt(profile.bestSquat),
-          baselineDeadlift: parseInt(profile.bestDeadlift),
-          bestBench: 0,       // reset bests
-          bestSquat: 0,
-          bestDeadlift: 0,
-        }, { merge: true });
-        
+        await setDoc(
+          userRef,
+          {
+            weight: parseInt(profile.weight),
+            height: profile.height,
+            baselineBench: parseInt(profile.bestBench),
+            baselineSquat: parseInt(profile.bestSquat),
+            baselineDeadlift: parseInt(profile.bestDeadlift),
+            bestBench: 0,
+            bestSquat: 0,
+            bestDeadlift: 0,
+          },
+          { merge: true }
+        );
 
         await stopMusic();
         navigation.replace("MainTabs");
@@ -55,41 +59,47 @@ const CreateProfile = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: "#000" }}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.container}>
-          <Text style={styles.title}>Create Profile</Text>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.title}>Create Profile</Text>
 
-          {[
-            { placeholder: "Weight (lbs)", key: "weight" },
-            { placeholder: "Height (e.g., 5'11)", key: "height" },
-            { placeholder: "Best Bench (lbs)", key: "bestBench" },
-            { placeholder: "Best Squat (lbs)", key: "bestSquat" },
-            { placeholder: "Best Deadlift (lbs)", key: "bestDeadlift" },
-          ].map(({ placeholder, key }) => (
-            <View key={key} style={styles.inputView}>
-              <TextInput
-                style={styles.inputText}
-                placeholder={placeholder}
-                placeholderTextColor="white"
-                keyboardType={
-                  key.includes("weight") || key.includes("best")
-                    ? "numeric"
-                    : "default"
-                }
-                returnKeyType="done"
-                value={profile[key]}
-                onChangeText={(value) =>
-                  setProfile({ ...profile, [key]: value })
-                }
-              />
-            </View>
-          ))}
+            {[
+              { placeholder: "Weight (lbs)", key: "weight" },
+              { placeholder: "Height (e.g., 5'11)", key: "height" },
+              { placeholder: "Best Bench (lbs)", key: "bestBench" },
+              { placeholder: "Best Squat (lbs)", key: "bestSquat" },
+              { placeholder: "Best Deadlift (lbs)", key: "bestDeadlift" },
+            ].map(({ placeholder, key }) => (
+              <View key={key} style={styles.inputView}>
+                <TextInput
+                  style={styles.inputText}
+                  placeholder={placeholder}
+                  placeholderTextColor="white"
+                  keyboardType={
+                    key.includes("weight") || key.includes("best")
+                      ? "numeric"
+                      : "default"
+                  }
+                  returnKeyType="done"
+                  value={profile[key]}
+                  onChangeText={(value) =>
+                    setProfile({ ...profile, [key]: value })
+                  }
+                  onSubmitEditing={Keyboard.dismiss} // dismiss when "Done" pressed
+                />
+              </View>
+            ))}
 
-          <TouchableOpacity style={styles.glowBtn} onPress={handleSubmit}>
-            <Text style={styles.glowText}>Save</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.glowBtn} onPress={handleSubmit}>
+              <Text style={styles.glowText}>Save</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -99,23 +109,26 @@ const CreateProfile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#000",
+  },
+  scrollContent: {
     alignItems: "center",
-    backgroundColor: "#000", // black bg
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    paddingVertical: 40,
   },
   title: {
     fontSize: 28,
-    color: "#ff1a1a", // neon red
+    color: "#ff1a1a",
     marginBottom: 30,
     letterSpacing: 3,
-    fontFamily: "Orbitron_700Bold", // matches your theme
+    fontFamily: "Orbitron_700Bold",
     textShadowColor: "#ff1a1a",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
   },
   inputView: {
-    width: "90%",
+    width: "80%",
+    alignSelf: "center",
     borderColor: "#ff1a1a",
     borderWidth: 2,
     borderRadius: 12,
@@ -123,7 +136,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     justifyContent: "center",
     paddingHorizontal: 15,
-    backgroundColor: "rgba(255, 26, 26, 0.07)", // subtle red tint
+    backgroundColor: "rgba(255, 26, 26, 0.07)",
     shadowColor: "#ff1a1a",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -135,10 +148,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: "Orbitron_400Regular",
     fontSize: 16,
-    selectionColor: "#ff1a1a", // red cursor
   },
   glowBtn: {
-    width: "90%",
+    width: "80%",
     borderColor: "#ff1a1a",
     borderWidth: 2,
     borderRadius: 12,
@@ -160,6 +172,5 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
 });
-
 
 export default CreateProfile;
