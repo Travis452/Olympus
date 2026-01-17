@@ -26,8 +26,12 @@ const WorkoutSummary = ({
 
   // Animations (self-contained)
   const expBarAnim = useRef(new Animated.Value(0)).current;
-  const expCounterAnim = useRef(new Animated.Value(Math.max(finalExp - expGained, 0))).current;
-  const [displayExp, setDisplayExp] = useState(Math.max(finalExp - expGained, 0));
+  const expCounterAnim = useRef(
+    new Animated.Value(Math.max(finalExp - expGained, 0))
+  ).current;
+  const [displayExp, setDisplayExp] = useState(
+    Math.max(finalExp - expGained, 0)
+  );
 
   useEffect(() => {
     if (!visible || expGained <= 0) return;
@@ -109,51 +113,85 @@ const WorkoutSummary = ({
   );
 };
 
-// Styles mirror your StartWorkout ones so it drops in cleanly
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1.5,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.7)", // darker overlay
   },
   modalContainer: {
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 40,
     width: "80%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#1a1a1a", // dark grey background
+    borderWidth: 1,
+    borderColor: "#dc143c", // subtle red border
   },
   summaryTitle: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+    color: "#fff", // white title
   },
   summaryList: { maxHeight: 200 },
   summaryItem: {
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#2a2a2a", // slightly lighter card
     padding: 10,
     borderRadius: 5,
     marginVertical: 5,
   },
-  summaryText: { fontSize: 16, fontWeight: "bold", textAlign: "center" },
-  setText: { fontSize: 14, color: "#555", marginLeft: 10 },
-  noDataText: { fontSize: 16, color: "#888", textAlign: "center" },
-  expText: { fontSize: 18, fontWeight: "bold", color: "#dc143c", marginVertical: 10 },
+  summaryText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#fff",
+    textTransform: "capitalize",
+  },
+  setText: {
+    fontSize: 14,
+    color: "#aaa", // light grey for sets
+    marginLeft: 10,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
+  expText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#dc143c",
+    marginVertical: 10,
+    // glowy red effect
+    textShadowColor: "#dc143c",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+  },
   expBarContainer: {
     width: "80%",
     height: 10,
-    backgroundColor: "#ccc",
+    backgroundColor: "#333", // dark track
     borderRadius: 5,
     overflow: "hidden",
     marginTop: 10,
     alignSelf: "center",
   },
-  expBar: { height: "100%", backgroundColor: "#dc143c" },
-  expBarText: { marginTop: 5, fontSize: 16, fontWeight: "bold", textAlign: "center" },
+  expBar: {
+    height: "100%",
+    backgroundColor: "#dc143c",
+  },
+  expBarText: {
+    marginTop: 5,
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#fff", // white level text
+  },
   closeButton: {
     marginTop: 20,
     paddingVertical: 10,
@@ -161,8 +199,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#dc143c",
     borderRadius: 5,
     alignItems: "center",
+    // subtle glow on button
+    shadowColor: "#dc143c",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5, // for Android
   },
-  closeButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 });
 
 export default WorkoutSummary;

@@ -13,22 +13,19 @@ import {
 
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
-import {
-  collection,
-  addDoc,
-  getDoc,
-  doc,
-} from "firebase/firestore";
+import { collection, addDoc, getDoc, doc } from "firebase/firestore";
 import { db, awardEXP, updateUserStats } from "../config/firebase";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { LinearGradient } from "expo-linear-gradient";
 
 import Exercises from "./Exercises";
 import BackButton from "../components/BackButton";
 import WorkoutTimer from "../components/WorkoutTimer";
-import LoadingScreen from "../components/LoadingScreen"; 
+import LoadingScreen from "../components/LoadingScreen";
 import WorkoutSummary from "../components/WorkoutSummary";
 
+const RED = "#ff1a1a";
 
 const CustomWorkout = () => {
   const navigation = useNavigation();
@@ -39,21 +36,23 @@ const CustomWorkout = () => {
   const [setInputs, setSetInputs] = useState([]);
   const [isPaused, setIsPaused] = useState(false);
   const [loadingVisible, setLoadingVisible] = useState(false);
-const [performedExercises, setPerformedExercises] = useState([]);
-const [expGained, setExpGained] = useState(0);
-const [finalExp, setFinalExp] = useState(0);
-const [workoutDuration, setWorkoutDuration] = useState(0);
-const [title, setTitle] = useState("Custom Workout"); // used in workoutData
+  const [performedExercises, setPerformedExercises] = useState([]);
+  const [expGained, setExpGained] = useState(0);
+  const [finalExp, setFinalExp] = useState(0);
+  const [workoutDuration, setWorkoutDuration] = useState(0);
+  const [title, setTitle] = useState("Custom Workout");
+  const [finishModalVisible, setFinishModalVisible] = useState(false);
 
   const dispatch = useDispatch();
   const timer = useSelector((state) => state.timer.seconds);
 
   const auth = getAuth();
-
   const slideAnim = useRef(new Animated.Value(-500)).current;
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => setCurrentUser(user || null));
+    const unsub = onAuthStateChanged(auth, (user) =>
+      setCurrentUser(user || null)
+    );
     return unsub;
   }, [auth]);
 
@@ -75,8 +74,6 @@ const [title, setTitle] = useState("Custom Workout"); // used in workoutData
       setShowExerciseModal(false);
     });
   };
-
-  const [finishModalVisible, setFinishModalVisible] = useState(false);
 
   const handleAddExercise = (exercise) => {
     setSelectedExercises((prev) => [...prev, exercise]);
@@ -101,407 +98,513 @@ const [title, setTitle] = useState("Custom Workout"); // used in workoutData
   };
 
   const saveWorkoutData = async () => {
-    setLoadingVisible(true); // Show loading screen
+    setLoadingVisible(true);
     setFinishModalVisible(false);
 
     try {
-      if (currentUser) {
-        setWorkoutDuration(timer); // Store final workout duration
+      if (!currentUser) {
+        console.error("User is not authenticated");
+        setLoadingVisible(false);
+        return;
+      }
 
-        let completedExercises = [];
+      setWorkoutDuration(timer);
 
-        selectedExercises.forEach((exercise, exerciseIndex) => {
-          const validSets =
-            setInputs[exerciseIndex]?.filter(
-              (set) => set.lbs !== "" && set.reps !== ""
-            ) || [];
+      let completedExercises = [];
 
-          if (validSets.length > 0) {
-            completedExercises.push({
-              title: exercise.title || exercise.name,
-              sets: validSets,
-            });
-          }
-        });
+      selectedExercises.forEach((exercise, exerciseIndex) => {
+        const validSets =
+          setInputs[exerciseIndex]?.filter(
+            (set) => set.lbs !== "" && set.reps !== ""
+          ) || [];
 
-        if (completedExercises.length === 0) {
-          alert("No exercises were completed. Workout not saved.");
-          setLoadingVisible(false); // Hide loading screen
-          return;
+        if (validSets.length > 0) {
+          completedExercises.push({
+            title: exercise.title || exercise.name,
+            sets: validSets,
+          });
         }
+      });
 
-        const userRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
+      if (completedExercises.length === 0) {
+        alert("No exercises were completed. Workout not saved.");
+        setLoadingVisible(false);
+        return;
+      }
 
-        const workoutData = {
-          userId: currentUser.uid,
-          workoutTitle: title,
-          exercises: completedExercises,
-          timestamp: new Date(),
-          duration: timer,
-        };
+      const userRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
 
-        const docRef = await addDoc(collection(db, "workouts"), workoutData);
-        console.log("Workout data added with ID", docRef.id);
+      const workoutData = {
+        userId: currentUser.uid,
+        workoutTitle: title,
+        exercises: completedExercises,
+        timestamp: new Date(),
+        duration: timer,
+      };
 
-        const bodyWeight = 175;
-        const isVerified = false;
-        const expResult = await awardEXP(
-          currentUser.uid,
-          workoutData.exercises,
-          bodyWeight,
-          isVerified
+      const docRef = await addDoc(collection(db, "workouts"), workoutData);
+      console.log("Workout data added with ID", docRef.id);
+
+      const bodyWeight = 175; // later: pull from profile
+      const isVerified = false;
+
+      const expResult = await awardEXP(
+        currentUser.uid,
+        workoutData.exercises,
+        bodyWeight,
+        isVerified
+      );
+
+      let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
+
+      completedExercises.forEach((exercise) => {
+        const exerciseName = (exercise.title || "").toLowerCase();
+        const maxWeight = Math.max(
+          ...exercise.sets.map((set) => parseInt(set.lbs || 0))
         );
 
-        let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
-
-        completedExercises.forEach((exercise) => {
-          const exerciseName = exercise.title.toLowerCase();
-          const maxWeight = Math.max(
-            ...exercise.sets.map((set) => parseInt(set.lbs || 0))
-          );
-
-          if (exerciseName.includes("bench")) {
-            newStats.bestBench = Math.max(newStats.bestBench, maxWeight);
-          } else if (exerciseName.includes("squat")) {
-            newStats.bestSquat = Math.max(newStats.bestSquat, maxWeight);
-          } else if (exerciseName.includes("deadlift")) {
-            newStats.bestDeadlift = Math.max(newStats.bestDeadlift, maxWeight);
-          }
-        });
-
-        console.log("💪 Updating user stats with:", newStats);
-        await updateUserStats(currentUser.uid, newStats, isVerified);
-
-        if (expResult) {
-          const newEXP = expResult.exp;
-          const expEarned = newEXP - previousEXP;
-
-          setExpGained(expEarned);
-          setFinalExp(newEXP);
-          dispatch(fetchUserEXP(currentUser.uid));
-          setPerformedExercises(completedExercises);
-          setWorkoutSummaryVisible(true);
-        } else {
-          console.error("EXP calculation failed.");
+        if (exerciseName.includes("bench")) {
+          newStats.bestBench = Math.max(newStats.bestBench, maxWeight);
+        } else if (exerciseName.includes("squat")) {
+          newStats.bestSquat = Math.max(newStats.bestSquat, maxWeight);
+        } else if (exerciseName.includes("deadlift")) {
+          newStats.bestDeadlift = Math.max(newStats.bestDeadlift, maxWeight);
         }
+      });
+
+      console.log("💪 Updating user stats with:", newStats);
+      await updateUserStats(currentUser.uid, newStats, isVerified);
+
+      if (expResult) {
+        const newEXP = expResult.exp;
+        const expEarned = newEXP - previousEXP;
+
+        setExpGained(expEarned);
+        setFinalExp(newEXP);
+        dispatch(fetchUserEXP(currentUser.uid));
+        setPerformedExercises(completedExercises);
+        setWorkoutSummaryVisible(true);
       } else {
-        console.error("User is not authenticated");
+        console.error("EXP calculation failed.");
       }
     } catch (error) {
       console.error("Error adding workout data:", error);
     }
 
-    setLoadingVisible(false); // Hide loading screen when done
+    setLoadingVisible(false);
   };
 
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase());
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-      <LoadingScreen isVisible={loadingVisible} />
-        <View style={styles.headerContainer}>
-          <BackButton destination="HomeScreen" />
-
-          <Text style={styles.title}>Custom Workout</Text>
-          <WorkoutTimer
-            isPaused={isPaused}
-            onTogglePause={() => setIsPaused(!isPaused)}
-          />
-        </View>
-
-        {selectedExercises.map((exercise, exerciseIndex) => (
-          <View key={exerciseIndex} style={styles.exerciseContainer}>
-            <Text style={styles.exerciseTitle}>
-              {capitalizeWords(exercise.name)}
-            </Text>
-
-            <View style={styles.headerContainerSets}>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Set</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Prev</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>lbs</Text>
-              </View>
-              <View style={styles.setColumn}>
-                <Text style={styles.headerText}>Reps</Text>
-              </View>
-            </View>
-
-            {setInputs[exerciseIndex] &&
-              setInputs[exerciseIndex].map((set, setIndex) => (
-                <View key={setIndex} style={styles.setContainer}>
-                  <View style={styles.setColumn}>
-                    <Text style={styles.setText}>{setIndex + 1}</Text>
-                  </View>
-                  <View style={styles.previousColumn}>
-                    <Text style={styles.previousText}>---</Text>
-                  </View>
-                  <View style={styles.setColumn}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="lbs"
-                      keyboardType="numeric"
-                      value={set.lbs}
-                      onChangeText={(val) =>
-                        handleInputChange(exerciseIndex, setIndex, "lbs", val)
-                      }
-                    />
-                  </View>
-                  <View style={styles.setColumn}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="reps"
-                      keyboardType="numeric"
-                      value={set.reps}
-                      onChangeText={(val) =>
-                        handleInputChange(exerciseIndex, setIndex, "reps", val)
-                      }
-                    />
-                  </View>
-                </View>
-              ))}
-
-            <TouchableOpacity
-              onPress={() => handleAddSet(exerciseIndex)}
-              style={styles.addButton}
-            >
-              <Text style={styles.addButtonText}>Add Set</Text>
-            </TouchableOpacity>
+    <LinearGradient
+      colors={["#000000", "#050816", "#190000"]}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <LoadingScreen isVisible={loadingVisible} />
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <BackButton />
+            <Text style={styles.title}>CUSTOM WORKOUT</Text>
+            <WorkoutTimer
+              isPaused={isPaused}
+              onTogglePause={() => setIsPaused(!isPaused)}
+            />
           </View>
-        ))}
 
-        <View style={styles.addButtonContainer}>
-          <TouchableOpacity onPress={openModal} style={styles.addButton}>
-            <Text style={styles.addButtonText}>Add Exercise</Text>
+          {/* Workout name input */}
+          <View style={styles.workoutNameContainer}>
+            <Text style={styles.workoutNameLabel}>Workout Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter workout name..."
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={title}
+              onChangeText={setTitle}
+            />
+          </View>
+
+          {/* Exercise cards */}
+          {selectedExercises.map((exercise, exerciseIndex) => (
+            <View key={exerciseIndex} style={styles.card}>
+              <Text style={styles.cardTitle}>
+                {capitalizeWords(exercise.name)}
+              </Text>
+
+              {/* Set header row */}
+              <View style={styles.setHeaderRow}>
+                <View style={styles.setColumn}>
+                  <Text style={styles.setHeaderText}>Set</Text>
+                </View>
+                <View style={styles.setColumn}>
+                  <Text style={styles.setHeaderText}>Prev</Text>
+                </View>
+                <View style={styles.setColumn}>
+                  <Text style={styles.setHeaderText}>lbs</Text>
+                </View>
+                <View style={styles.setColumn}>
+                  <Text style={styles.setHeaderText}>Reps</Text>
+                </View>
+              </View>
+
+              {/* Sets */}
+              {setInputs[exerciseIndex] &&
+                setInputs[exerciseIndex].map((set, setIndex) => (
+                  <View key={setIndex} style={styles.setRow}>
+                    <View style={styles.setColumn}>
+                      <Text style={styles.setText}>{setIndex + 1}</Text>
+                    </View>
+                    <View style={styles.setColumn}>
+                      <Text style={styles.previousText}>---</Text>
+                    </View>
+                    <View style={styles.setColumn}>
+                      <TextInput
+                        style={styles.setInput}
+                        placeholder="lbs"
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        keyboardType="numeric"
+                        value={set.lbs}
+                        onChangeText={(val) =>
+                          handleInputChange(exerciseIndex, setIndex, "lbs", val)
+                        }
+                      />
+                    </View>
+                    <View style={styles.setColumn}>
+                      <TextInput
+                        style={styles.setInput}
+                        placeholder="reps"
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        keyboardType="numeric"
+                        value={set.reps}
+                        onChangeText={(val) =>
+                          handleInputChange(
+                            exerciseIndex,
+                            setIndex,
+                            "reps",
+                            val
+                          )
+                        }
+                      />
+                    </View>
+                  </View>
+                ))}
+
+              <TouchableOpacity
+                onPress={() => handleAddSet(exerciseIndex)}
+                style={styles.secondaryButton}
+              >
+                <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {/* Add Exercise */}
+          <TouchableOpacity onPress={openModal} style={styles.neonButton}>
+            <Text style={styles.neonButtonText}>+ ADD EXERCISE</Text>
           </TouchableOpacity>
-        </View>
 
-        <View style={styles.buttonContainer}>
+          {/* Save Workout */}
           <TouchableOpacity
-            style={styles.saveButton}
+            style={[styles.neonButton, { marginTop: 10 }]}
             onPress={handleSaveWorkout}
           >
-            <Text style={styles.saveBtnTxt}>Save Workout</Text>
+            <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
           </TouchableOpacity>
-        </View>
 
-
-
-        <Modal
-          visible={showExerciseModal}
-          animationType="none"
-          transparent={true}
-        >
-          <Animated.View
-            style={[
-              styles.modalOverlay,
-              { transform: [{ translateY: slideAnim }] },
-            ]}
+          {/* Exercise picker modal */}
+          <Modal
+            visible={showExerciseModal}
+            animationType="fade"
+            transparent={true}
           >
-            <View style={styles.modalContent}>
-              <Exercises onClose={closeModal} onSelect={handleAddExercise} />
-            </View>
-          </Animated.View>
-        </Modal>
-
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={finishModalVisible}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalContainer}>
-              <Text>Save Workout?</Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  onPress={saveWorkoutData}
-                  style={styles.saveBtn}
-                >
-                  <Text style={styles.btnText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setFinishModalVisible(false)}
-                  style={styles.cancelBtn}
-                >
-                  <Text style={styles.btnText}> Cancel </Text>
-                </TouchableOpacity>
+            <View style={styles.modalOverlay}>
+              <View style={styles.fullscreenModalContent}>
+                <Exercises onClose={closeModal} onSelect={handleAddExercise} />
               </View>
             </View>
-          </View>
-        </Modal>
-        <WorkoutSummary
-  visible={workoutSummaryVisible}
-  performedExercises={performedExercises}
-  expGained={expGained}
-  finalExp={finalExp}
-  onClose={() => {
-    setWorkoutSummaryVisible(false);
-    navigation.navigate("HomeScreen");
-  }}
-/>
+          </Modal>
 
+          {/* Confirm save modal */}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={finishModalVisible}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Save Workout?</Text>
+                <Text style={styles.modalBodyText}>
+                  This will log your workout and update your EXP.
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    onPress={saveWorkoutData}
+                    style={styles.modalButtonPrimary}
+                  >
+                    <Text style={styles.modalButtonText}>SAVE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setFinishModalVisible(false)}
+                    style={styles.modalButtonSecondary}
+                  >
+                    <Text style={styles.modalButtonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
-      </ScrollView>
-    </SafeAreaView>
+          {/* Summary modal */}
+          <WorkoutSummary
+            visible={workoutSummaryVisible}
+            performedExercises={performedExercises}
+            expGained={expGained}
+            finalExp={finalExp}
+            onClose={() => {
+              setWorkoutSummaryVisible(false);
+              navigation.navigate("HomeScreen");
+            }}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  gradient: {
     flex: 1,
-    backgroundColor: "white",
-  },
-  container: {
     padding: 20,
-    backgroundColor: "white",
   },
-
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginTop: 10,
-  },
-
-  headerContainer: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 25,
+    fontSize: 24,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    textShadowColor: RED,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    letterSpacing: 3,
+  },
+
+  workoutNameContainer: {
+    marginVertical: 10,
+  },
+  workoutNameLabel: {
+    color: "rgba(255,255,255,0.7)",
+    marginBottom: 6,
+    fontSize: 14,
+  },
+
+  // reused from Profile style
+  input: {
+    backgroundColor: "#000",
+    color: "#fff",
+    borderWidth: 1,
+    borderColor: "#555",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+
+  card: {
+    backgroundColor: "rgba(255,26,26,0.05)",
+    borderColor: RED,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: RED,
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardTitle: {
+    color: RED,
+    fontSize: 18,
+    fontFamily: "Orbitron_700Bold",
+    marginBottom: 12,
+    textAlign: "center",
+    textShadowColor: RED,
+    textShadowRadius: 5,
+  },
+
+  setHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  setHeaderText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
     fontWeight: "700",
     textAlign: "center",
-    flex: 1,
   },
-  backBtn: {
-    marginRight: 20,
-  },
-
-  exerciseContainer: {
-    marginBottom: 30,
-  },
-  exerciseTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#dc143c",
-    marginBottom: 10,
-  },
-  headerContainerSets: {
+  setRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  setContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    marginBottom: 8,
     alignItems: "center",
-    marginBottom: 10,
   },
-
   setColumn: {
+    width: "23%",
     alignItems: "center",
-    justifyContent: "center",
-    width: "20%",
-  },
-  headerText: {
-    fontWeight: "700",
-  },
-  previousColumn: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "25%",
-  },
-  previousText: {
-    fontSize: 14,
-    color: "black",
-    fontWeight: "bold",
-  },
-  input: {
-    flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderWidth: 0.5,
-    borderRadius: 5,
-    width: "100%",
   },
   setText: {
+    color: "#fff",
     fontSize: 14,
   },
-  addButton: {
-    backgroundColor: "#dc143c",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
+  previousText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
   },
-  addButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  addButtonContainer: {
-    alignItems: "center",
-    marginTop: 20,
+  setInput: {
+    width: "100%",
+    backgroundColor: "#000",
+    color: "#fff",
+    borderWidth: 1,
+    borderColor: "#555",
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    fontSize: 13,
   },
 
-  saveButton: {
-    alignSelf: "center",
+  fullscreenModalContent: {
     width: "80%",
-    backgroundColor: "#dc143c",
-    borderRadius: 5,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    marginLeft: 40,
+    height: "80%",
   },
 
-  centeredView: {
-    flex: 1.5,
-    justifyContent: "center",
+  neonButton: {
+    width: "80%",
+    alignSelf: "center",
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: "center",
-    marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    marginVertical: 8,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  modalButtons: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+    gap: 12,
+  },
+
+  modalButtonPrimary: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  modalButtonSecondary: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.25)",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+
+  modalButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 2,
+  },
+
+  neonButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 2,
+  },
+  secondaryButton: {
+    marginTop: 8,
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: RED,
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  secondaryButtonText: {
+    color: RED,
+    fontSize: 12,
+    fontFamily: "Orbitron_700Bold",
+    letterSpacing: 1,
   },
 
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-start",
-    backgroundColor: "rgba(0,0,0,0.3)",
-  },
-  modalContent: {
-    marginTop: 100,
-    marginLeft: 20,
-    marginRight: 20,
-    height: "75%",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 20,
-  },
-
-  modalContainer: {
-    borderRadius: 10,
-    padding: 40,
-    width: "80%",
+    backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
   },
-  
+
+  modalContent: {
+    width: "85%",
+    maxHeight: "80%",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: RED,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  modalBodyText: {
+    color: "black",
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    gap: 10,
+  },
 });
 
 export default CustomWorkout;

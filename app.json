@@ -10,6 +10,17 @@
       "expo-audio",
       "expo-font"
     ],
-    "jsEngine": "jsc"
+    "jsEngine": "jsc",
+    "extra": {
+      "eas": {
+        "projectId": "ee391cd2-5a5d-44cd-8968-28f69e99f154"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.arcstar.Olympus",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
   }
 }

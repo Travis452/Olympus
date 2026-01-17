@@ -95,16 +95,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: "#fff",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 10,
+    overflow: "hidden", // keeps content inside the rounded corners
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    backgroundColor: "#1a1a1a",
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#2a2a2a", // slightly lighter grey for cards
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
   closeText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: "#fff", // white X button
     padding: 8,
     marginTop: 5,
   },
@@ -136,13 +139,15 @@ const styles = StyleSheet.create({
   },
 
   searchInput: {
-    color: "black",
+    color: "#fff", // white text when typing
+    backgroundColor: "#2a2a2a",
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#444",
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
     fontSize: 16,
+    placeholderTextColor: "#888", // note: this won't work here, see below
   },
 
   thumbnail: {
@@ -150,7 +155,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 8,
     marginRight: 12,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#333",
   },
 
   textContainer: {
@@ -161,11 +166,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textTransform: "capitalize",
+    color: "#dc143c", // crimson red to match your theme
   },
 
   secondary: {
     fontSize: 13,
-    color: "#555",
+    color: "#aaa", // light grey for target muscle
   },
 });
 

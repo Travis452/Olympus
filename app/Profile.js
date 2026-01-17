@@ -219,7 +219,7 @@ const Profile = () => {
               <View style={styles.expBarBackground} />
 
               {/* Red foreground (progress) */}
-              <View style={[styles.expBarFill, { width: "0%" }]} />
+              <View style={[styles.expBarFill, { width: progressWidth }]} />
             </View>
 
             <Text style={styles.expText}>{exp} / 1000 EXP</Text>
@@ -292,22 +292,26 @@ const Profile = () => {
 
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
+                    style={[styles.neonButton, { flex: 1, width: "auto" }]}
+                    onPress={saveProfileUpdates}
+                  >
+                    <Text style={styles.neonButtonText}>SAVE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={[
                       styles.neonButton,
                       {
+                        flex: 1,
+                        width: "auto",
                         backgroundColor: "rgba(255,255,255,0.1)",
                         borderColor: "#888",
                       },
                     ]}
                     onPress={() => setEditModalVisible(false)}
                   >
-                    <Text style={styles.neonButtonText}>CANCEL</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.neonButton}
-                    onPress={saveProfileUpdates}
-                  >
-                    <Text style={styles.neonButtonText}>SAVE</Text>
+                    <Text style={[styles.neonButtonText, { color: "#888" }]}>
+                      CANCEL
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -474,6 +478,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+    gap: 10,
   },
   emptyText: {
     color: "#fff",
