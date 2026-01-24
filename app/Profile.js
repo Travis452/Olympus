@@ -19,7 +19,7 @@ import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { db, storage } from "../config/firebase";
 
 const RED = "#ff1a1a";
@@ -41,6 +41,12 @@ const Profile = () => {
   });
 
   const isFocused = useIsFocused();
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    console.log("Logged out");
+  };
 
   const openEditModal = () => {
     setEditData({
@@ -248,6 +254,10 @@ const Profile = () => {
           {/* Edit Button */}
           <TouchableOpacity style={styles.neonButton} onPress={openEditModal}>
             <Text style={styles.neonButtonText}>EDIT PROFILE</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={{ color: "white" }}>Log Out</Text>
           </TouchableOpacity>
 
           {/* Edit Modal */}

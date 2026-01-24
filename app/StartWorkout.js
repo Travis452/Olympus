@@ -31,18 +31,18 @@ import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { updateUserStats } from "../config/firebase";
+import { LinearGradient } from "expo-linear-gradient";
 import WorkoutTimer from "../components/WorkoutTimer";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
 import WorkoutSummary from "../components/WorkoutSummary";
 
-
 const StartWorkout = ({ route }) => {
   const navigation = useNavigation();
   const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [expGained, setExpGained] = useState(426); // Example EXP gained
-  const [finalExp, setFinalExp] = useState(1574); // Example current total EXP
+  const [expGained, setExpGained] = useState(426);
+  const [finalExp, setFinalExp] = useState(1574);
   const [loadingVisible, setLoadingVisible] = useState(false);
   const timer = useSelector((state) => state.timer.seconds);
 
@@ -51,10 +51,9 @@ const StartWorkout = ({ route }) => {
   const expToNextLevel = level * baseExp;
   const expProgress = finalExp - (level - 1) * baseExp;
 
-  // Animated values
   const expBarAnim = useRef(new Animated.Value(0)).current;
   const expCounterAnim = useRef(
-    new Animated.Value(finalExp - expGained)
+    new Animated.Value(finalExp - expGained),
   ).current;
   const [displayExp, setDisplayExp] = useState(finalExp - expGained);
 
@@ -68,7 +67,7 @@ const StartWorkout = ({ route }) => {
     return exercises.map((exercise) =>
       Array(exercise.sets)
         .fill()
-        .map(() => ({ lbs: "", reps: "" }))
+        .map(() => ({ lbs: "", reps: "" })),
     );
   };
 
@@ -169,19 +168,19 @@ const StartWorkout = ({ route }) => {
   const [performedExercises, setPerformedExercises] = useState([]);
 
   const saveWorkoutData = async () => {
-    setLoadingVisible(true); // Show loading screen
+    setLoadingVisible(true);
     setFinishModalVisible(false);
 
     try {
       if (currentUser) {
-        setWorkoutDuration(timer); // Store final workout duration
+        setWorkoutDuration(timer);
 
         let completedExercises = [];
 
         exercises.forEach((exercise, exerciseIndex) => {
           const validSets =
             setInputs[exerciseIndex]?.filter(
-              (set) => set.lbs !== "" && set.reps !== ""
+              (set) => set.lbs !== "" && set.reps !== "",
             ) || [];
 
           if (validSets.length > 0) {
@@ -194,7 +193,7 @@ const StartWorkout = ({ route }) => {
 
         if (completedExercises.length === 0) {
           alert("No exercises were completed. Workout not saved.");
-          setLoadingVisible(false); // Hide loading screen
+          setLoadingVisible(false);
           return;
         }
 
@@ -219,7 +218,7 @@ const StartWorkout = ({ route }) => {
           currentUser.uid,
           workoutData.exercises,
           bodyWeight,
-          isVerified
+          isVerified,
         );
 
         let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
@@ -227,7 +226,7 @@ const StartWorkout = ({ route }) => {
         completedExercises.forEach((exercise) => {
           const exerciseName = exercise.title.toLowerCase();
           const maxWeight = Math.max(
-            ...exercise.sets.map((set) => parseInt(set.lbs || 0))
+            ...exercise.sets.map((set) => parseInt(set.lbs || 0)),
           );
 
           if (exerciseName.includes("bench")) {
@@ -261,7 +260,7 @@ const StartWorkout = ({ route }) => {
       console.error("Error adding workout data:", error);
     }
 
-    setLoadingVisible(false); // Hide loading screen when done
+    setLoadingVisible(false);
   };
 
   const fetchPreviousWorkout = async () => {
@@ -274,8 +273,8 @@ const StartWorkout = ({ route }) => {
           where("userId", "==", currentUser.uid),
           where("workoutTitle", "==", title),
           orderBy("timestamp", "desc"),
-          limit(1)
-        )
+          limit(1),
+        ),
       );
 
       if (querySnapshot.empty) {
@@ -289,7 +288,7 @@ const StartWorkout = ({ route }) => {
 
       if (!latestWorkout.exercises || !Array.isArray(latestWorkout.exercises)) {
         console.error(
-          "Error: No 'exercises' field or invalid format in latestWorkout!"
+          "Error: No 'exercises' field or invalid format in latestWorkout!",
         );
         setPreviousData([]);
         return;
@@ -308,16 +307,17 @@ const StartWorkout = ({ route }) => {
   };
 
   return (
-    <>
+    <LinearGradient
+      colors={["#000", "#1a1a1a", "#000"]}
+      style={styles.gradient}
+    >
       <LoadingScreen isVisible={loadingVisible} />
       <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.stickyHeader}>
             <View style={styles.titleContainer}>
               <BackButton destination="HomeScreen" />
-
               <Text style={styles.title}>{title}</Text>
-
               <WorkoutTimer
                 isPaused={isPaused}
                 onTogglePause={() => setIsPaused(!isPaused)}
@@ -325,39 +325,30 @@ const StartWorkout = ({ route }) => {
             </View>
           </View>
         </SafeAreaView>
+
         {exercises &&
           exercises.map((exercise, exerciseIndex) => (
-            <View key={exerciseIndex} style={styles.exerciseContainer}>
-              <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+            <View key={exerciseIndex} style={styles.card}>
+              <Text style={styles.cardTitle}>{exercise.title}</Text>
 
-              <View style={styles.headerContainer}>
-                <View style={styles.setColumn}>
-                  <Text style={styles.headerText}>Set</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.headerText}>Prev</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.headerText}>lbs</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.headerText}>Reps</Text>
-                </View>
+              <View style={styles.setHeaderRow}>
+                <Text style={styles.setHeaderText}>Set</Text>
+                <Text style={styles.setHeaderText}>Prev</Text>
+                <Text style={styles.setHeaderText}>lbs</Text>
+                <Text style={styles.setHeaderText}>Reps</Text>
               </View>
 
               {setInputs[exerciseIndex] &&
                 setInputs[exerciseIndex].map((set, setIndex) => (
                   <View
                     key={`${exerciseIndex}-${setIndex}`}
-                    style={styles.setContainer}
+                    style={styles.setRow}
                   >
                     <View style={styles.setColumn}>
-                      <TouchableOpacity style={styles.setss}>
-                        <Text>{setIndex + 1}</Text>
-                      </TouchableOpacity>
+                      <Text style={styles.setText}>{setIndex + 1}</Text>
                     </View>
 
-                    <View style={styles.previousColumn}>
+                    <View style={styles.setColumn}>
                       <Text style={styles.previousText}>
                         {previousData[exerciseIndex] &&
                         previousData[exerciseIndex].sets &&
@@ -369,71 +360,86 @@ const StartWorkout = ({ route }) => {
                       </Text>
                     </View>
 
-                    <TextInput
-                      style={styles.input}
-                      placeholder="lbs"
-                      keyboardType="numeric"
-                      returnKeyType="done"
-                      value={set.lbs}
-                      onChangeText={(value) =>
-                        handleInputChange(exerciseIndex, setIndex, "lbs", value)
-                      }
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Reps"
-                      keyboardType="numeric"
-                      returnKeyType="done"
-                      value={set.reps}
-                      onChangeText={(value) =>
-                        handleInputChange(
-                          exerciseIndex,
-                          setIndex,
-                          "reps",
-                          value
-                        )
-                      }
-                    />
+                    <View style={styles.setColumn}>
+                      <TextInput
+                        style={styles.setInput}
+                        placeholder="lbs"
+                        placeholderTextColor="#666"
+                        keyboardType="numeric"
+                        returnKeyType="done"
+                        value={set.lbs}
+                        onChangeText={(value) =>
+                          handleInputChange(
+                            exerciseIndex,
+                            setIndex,
+                            "lbs",
+                            value,
+                          )
+                        }
+                      />
+                    </View>
+
+                    <View style={styles.setColumn}>
+                      <TextInput
+                        style={styles.setInput}
+                        placeholder="reps"
+                        placeholderTextColor="#666"
+                        keyboardType="numeric"
+                        returnKeyType="done"
+                        value={set.reps}
+                        onChangeText={(value) =>
+                          handleInputChange(
+                            exerciseIndex,
+                            setIndex,
+                            "reps",
+                            value,
+                          )
+                        }
+                      />
+                    </View>
                   </View>
                 ))}
 
               <TouchableOpacity
                 onPress={() => handleAddSet(exerciseIndex)}
-                style={styles.addButton}
+                style={styles.secondaryButton}
               >
-                <Text style={styles.addButtonText}>Add Set</Text>
+                <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
               </TouchableOpacity>
             </View>
           ))}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleSaveWorkout}
-          >
-            <Text style={styles.saveBtnTxt}>Save Workout</Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity style={styles.neonButton} onPress={handleSaveWorkout}>
+          <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
+        </TouchableOpacity>
 
         <Modal
           animationType="fade"
           transparent={true}
           visible={finishModalVisible}
         >
-          <View style={styles.centeredView}>
-            <View style={styles.modalContainer}>
-              <Text>Save Workout?</Text>
-              <View style={styles.buttonContainer}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Save Workout?</Text>
+              <View style={styles.modalButtons}>
                 <TouchableOpacity
                   onPress={saveWorkoutData}
-                  style={styles.saveBtn}
+                  style={styles.modalButtonPrimary}
                 >
-                  <Text style={styles.btnText}>Save</Text>
+                  <Text style={styles.modalButtonText}>SAVE</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setFinishModalVisible(false)}
-                  style={styles.cancelBtn}
+                  style={styles.modalButtonSecondary}
                 >
-                  <Text style={styles.btnText}> Cancel </Text>
+                  <Text
+                    style={[
+                      styles.modalButtonText,
+                      { color: "rgba(255,255,255,0.7)" },
+                    ]}
+                  >
+                    CANCEL
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -441,262 +447,226 @@ const StartWorkout = ({ route }) => {
         </Modal>
 
         <WorkoutSummary
-  visible={workoutSummaryVisible}
-  performedExercises={performedExercises}
-  expGained={expGained}
-  finalExp={finalExp}
-  onClose={() => {
-    setWorkoutSummaryVisible(false);
-    navigation.navigate("HomeScreen");
-  }}
-/>
-
+          visible={workoutSummaryVisible}
+          performedExercises={performedExercises}
+          expGained={expGained}
+          finalExp={finalExp}
+          onClose={() => {
+            setWorkoutSummaryVisible(false);
+            navigation.navigate("HomeScreen");
+          }}
+        />
       </ScrollView>
-
-    </>
+    </LinearGradient>
   );
 };
 
-const styles = StyleSheet.create({
+const RED = "#dc143c";
 
-  addButton: {
-    backgroundColor: "#dc143c",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
   },
-  addButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginTop: 10,
+  container: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 0,
   },
   stickyHeader: {
     backgroundColor: "transparent",
   },
   safeArea: {
     flex: 0,
-    
-  },
-  container: {
-    flexGrow: 0,
-    padding: 20,
-    paddingTop: 0,
-    backgroundColor: "transparent",
-  },
-  title: {
-    fontSize: 25,
-    fontWeight: "700",
-    marginBottom: 20,
-    paddingTop: 10,
-    marginLeft: 50,
-    marginTop: 25,
-    textAlign: "center",
-  },
-  exerciseContainer: {
-    marginBottom: 20,
-  },
-  exerciseTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 10,
-    color: "#dc143c",
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  headerText: {
-    fontWeight: "700",
-    textAlign: "center",
   },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 10,
     width: "100%",
   },
-  setContainer: {
+  title: {
+    fontSize: 24,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    textShadowColor: RED,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    letterSpacing: 3,
+    flex: 1,
+  },
+
+  // Exercise card
+  card: {
+    backgroundColor: "rgba(255,26,26,0.05)",
+    borderColor: RED,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: RED,
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardTitle: {
+    color: RED,
+    fontSize: 18,
+    fontFamily: "Orbitron_700Bold",
+    marginBottom: 12,
+    textAlign: "center",
+    textShadowColor: RED,
+    textShadowRadius: 5,
+    textTransform: "capitalize",
+  },
+
+  // Set header row
+  setHeaderRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  setHeaderText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+    width: "23%",
+  },
+
+  // Set rows
+  setRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    alignItems: "center",
   },
   setColumn: {
+    width: "23%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 7,
-    backgroundColor: "lightGrey",
-    width: "20%",
-    height: 40,
-  },
-  previousColumn: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 7,
-    backgroundColor: "white",
-    width: "25%",
-    height: 40,
-  },
-  previousText: {
-    fontSize: 14,
-    color: "black",
-    fontWeight: "bold",
-  },
-
-  input: {
-    flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderWidth: 0.5,
-    borderRadius: 5,
-    width: "20%",
-  },
-  setss: {
-    backgroundColor: "lightgrey",
-    width: "50%",
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  saveButton: {
-    alignSelf: "center",
-    width: "80%",
-    backgroundColor: "#dc143c",
-    borderRadius: 5,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    marginLeft: 40,
-  },
-  saveBtnTxt: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  backBtn: {
-    marginTop: 25,
-  },
-  centeredView: {
-    flex: 1.5,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContainer: {
-    borderRadius: 10,
-    padding: 40,
-    width: "80%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-  },
-  saveBtn: {
-    width: "30%",
-    backgroundColor: "#dc143c",
-    borderRadius: 15,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 30,
-    marginBottom: 10,
-    color: "white",
-  },
-  btnText: {
-    color: "white",
-  },
-  cancelBtn: {
-    width: "30%",
-    backgroundColor: "black",
-    color: "white",
-    borderRadius: 15,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 30,
-    marginBottom: 10,
-  },
-
-  //Summary Modal
-
-  summaryTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  summaryList: {
-    maxHeight: 200,
-  },
-  summaryItem: {
-    backgroundColor: "#f4f4f4",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 5,
-  },
-  summaryText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
   },
   setText: {
+    color: "#fff",
     fontSize: 14,
-    color: "#555",
-    marginLeft: 10,
   },
-  noDataText: {
-    fontSize: 16,
-    color: "#888",
+  previousText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+  },
+  setInput: {
+    width: "100%",
+    backgroundColor: "#000",
+    color: "#fff",
+    borderWidth: 1,
+    borderColor: "#555",
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    fontSize: 13,
     textAlign: "center",
   },
-  expText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#dc143c",
-    marginVertical: 10,
-  },
 
-  expBarContainer: {
-    width: "80%",
-    height: 10,
-    backgroundColor: "#ccc",
-    borderRadius: 5,
-    overflow: "hidden",
-    marginTop: 10,
+  // Add Set button
+  secondaryButton: {
+    marginTop: 12,
     alignSelf: "center",
+    borderWidth: 1,
+    borderColor: RED,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  secondaryButtonText: {
+    color: RED,
+    fontSize: 12,
+    fontFamily: "Orbitron_700Bold",
+    letterSpacing: 1,
   },
 
-  expBar: {
-    height: "100%",
-    backgroundColor: "#dc143c",
+  // Save Workout button
+  neonButton: {
+    width: "80%",
+    alignSelf: "center",
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginVertical: 12,
+    marginBottom: 40,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  neonButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 2,
   },
 
-  expBarText: {
-    marginTop: 5,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-
-  closeButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: "#dc143c",
-    borderRadius: 5,
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
     alignItems: "center",
   },
-  closeButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: RED,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: "Orbitron_800ExtraBold",
+    color: RED,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  modalButtonPrimary: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.25)",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  modalButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 2,
   },
 });
 

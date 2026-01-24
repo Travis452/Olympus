@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Home, User, Trophy, History } from "lucide-react-native";
 
 import HomeScreen from "./HomeScreen";
+import Login from "./Login";
 import Profile from "./Profile";
 import Leaderboard from "./Leaderboard";
 import WorkoutHistory from "./WorkoutHistory";

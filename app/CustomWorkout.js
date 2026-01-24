@@ -51,7 +51,7 @@ const CustomWorkout = () => {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) =>
-      setCurrentUser(user || null)
+      setCurrentUser(user || null),
     );
     return unsub;
   }, [auth]);
@@ -115,7 +115,7 @@ const CustomWorkout = () => {
       selectedExercises.forEach((exercise, exerciseIndex) => {
         const validSets =
           setInputs[exerciseIndex]?.filter(
-            (set) => set.lbs !== "" && set.reps !== ""
+            (set) => set.lbs !== "" && set.reps !== "",
           ) || [];
 
         if (validSets.length > 0) {
@@ -154,7 +154,7 @@ const CustomWorkout = () => {
         currentUser.uid,
         workoutData.exercises,
         bodyWeight,
-        isVerified
+        isVerified,
       );
 
       let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
@@ -162,7 +162,7 @@ const CustomWorkout = () => {
       completedExercises.forEach((exercise) => {
         const exerciseName = (exercise.title || "").toLowerCase();
         const maxWeight = Math.max(
-          ...exercise.sets.map((set) => parseInt(set.lbs || 0))
+          ...exercise.sets.map((set) => parseInt(set.lbs || 0)),
         );
 
         if (exerciseName.includes("bench")) {
@@ -289,7 +289,7 @@ const CustomWorkout = () => {
                             exerciseIndex,
                             setIndex,
                             "reps",
-                            val
+                            val,
                           )
                         }
                       />
@@ -392,6 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
+    flex: 1,
     fontSize: 24,
     fontFamily: "Orbitron_800ExtraBold",
     color: RED,
