@@ -178,7 +178,7 @@ const Profile = () => {
     );
   }
 
-  const expProgress = exp % 1000;
+  const expProgress = (exp || 0) % 1000;
   const progressWidth = `${(expProgress / 1000) * 100}%`;
 
   return (
@@ -218,17 +218,13 @@ const Profile = () => {
           </View>
 
           {/* EXP + Level */}
+
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>Level {level}</Text>
             <View style={styles.expBarContainer}>
-              {/* Grey background (empty bar) */}
-              <View style={styles.expBarBackground} />
-
-              {/* Red foreground (progress) */}
               <View style={[styles.expBarFill, { width: progressWidth }]} />
             </View>
-
-            <Text style={styles.expText}>{exp} / 1000 EXP</Text>
+            <Text style={styles.expText}>{exp || 0} / 1000 EXP</Text>
           </View>
 
           {/* Stats */}
@@ -255,10 +251,10 @@ const Profile = () => {
           <TouchableOpacity style={styles.neonButton} onPress={openEditModal}>
             <Text style={styles.neonButtonText}>EDIT PROFILE</Text>
           </TouchableOpacity>
-
+          {/* 
           <TouchableOpacity onPress={handleLogout}>
             <Text style={{ color: "white" }}>Log Out</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Edit Modal */}
           <Modal
@@ -389,17 +385,14 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     overflow: "hidden",
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(255,255,255,0.2)", // grey background directly on container
     marginTop: 10,
-    position: "relative",
   },
-  expBarBackground: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.2)", // grey/empty bar
-  },
+
   expBarFill: {
     height: "100%",
-    backgroundColor: "#ff1a1a", // red fill
+    backgroundColor: "#ff1a1a",
+    borderRadius: 6,
   },
 
   expText: {
