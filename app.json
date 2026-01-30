@@ -8,7 +8,8 @@
     "slug": "Olympus",
     "plugins": [
       "expo-audio",
-      "expo-font"
+      "expo-font",
+      "@react-native-google-signin/google-signin"
     ],
     "jsEngine": "jsc",
     "extra": {
@@ -18,6 +19,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.arcstar.Olympus",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

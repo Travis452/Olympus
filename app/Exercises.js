@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
-import axios from "axios";
 import { RAPIDAPI_KEY } from "@env"; // make sure this is working
 
 const Exercises = ({ onClose, onSelect }) => {
@@ -32,8 +31,8 @@ const Exercises = ({ onClose, onSelect }) => {
 
       try {
         const response = await axios.request(options);
-        setExercises(response.data); // limit for now
-        setFilteredExercises(response.data); // set filtered copy
+        setExercises(response.data);
+        setFilteredExercises(response.data);
       } catch (error) {
         console.error("Error fetching exercises:", error);
       } finally {
@@ -47,7 +46,7 @@ const Exercises = ({ onClose, onSelect }) => {
   const handleSearch = (text) => {
     setSearchQuery(text);
     const filtered = exercises.filter((exercise) =>
-      exercise.name.toLowerCase().includes(text.toLowerCase())
+      exercise.name.toLowerCase().includes(text.toLowerCase()),
     );
     setFilteredExercises(filtered);
   };
