@@ -9,11 +9,13 @@ import {
   Modal,
   Animated,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
-import { collection, addDoc, getDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDoc, getDocs, doc, query, where, orderBy, limit } from "firebase/firestore";
 import { db, awardEXP, updateUserStats } from "../config/firebase";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -42,6 +44,41 @@ const CustomWorkout = () => {
   const [workoutDuration, setWorkoutDuration] = useState(0);
   const [title, setTitle] = useState("Custom Workout");
   const [finishModalVisible, setFinishModalVisible] = useState(false);
+  const [previousData, setPreviousData] = useState([]);
+  const scrollViewRef = useRef(null);
+
+
+  const fetchPreviousForExercise = async (exerciseName) => {
+    try {
+      if (!currentUser) return null;
+  
+      const q = query(
+        collection(db, "workouts"),
+        where("userId", "==", currentUser.uid),
+        orderBy("timestamp", "desc"),
+        limit(20)
+      );
+  
+      const snapshot = await getDocs(q);
+  
+      for (const doc of snapshot.docs) {
+        const workout = doc.data();
+        const match = workout.exercises?.find(
+          (ex) => (ex.title || "").toLowerCase() === exerciseName.toLowerCase()
+        );
+        if (match) return match.sets;
+      }
+  
+      return null;
+    } catch (error) {
+      console.error("Error fetching previous data:", error);
+      return null;
+    }
+  };
+
+const scrollToInput = (reactNode) => {
+  scrollViewRef.current?.scrollTo({ y: reactNode, animated: true });
+};
 
   const dispatch = useDispatch();
   const timer = useSelector((state) => state.timer.seconds);
@@ -75,10 +112,13 @@ const CustomWorkout = () => {
     });
   };
 
-  const handleAddExercise = (exercise) => {
+  const handleAddExercise = async (exercise) => {
     setSelectedExercises((prev) => [...prev, exercise]);
     setSetInputs((prev) => [...prev, [{ lbs: "", reps: "" }]]);
     setShowExerciseModal(false);
+  
+    const prevSets = await fetchPreviousForExercise(exercise.name);
+    setPreviousData((prev) => [...prev, prevSets || []]);
   };
 
   const handleInputChange = (exerciseIndex, setIndex, key, value) => {
@@ -199,6 +239,8 @@ const CustomWorkout = () => {
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase());
 
+
+
   return (
     <LinearGradient
       colors={["#000000", "#050816", "#190000"]}
@@ -206,19 +248,28 @@ const CustomWorkout = () => {
     >
       <SafeAreaView style={{ flex: 1 }}>
         <LoadingScreen isVisible={loadingVisible} />
+        <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <BackButton />
-            <Text style={styles.title}>CUSTOM WORKOUT</Text>
-            <WorkoutTimer
-              isPaused={isPaused}
-              onTogglePause={() => setIsPaused(!isPaused)}
-            />
-          </View>
+  ref={scrollViewRef}
+  contentContainerStyle={{ paddingBottom: 300 }}
+  showsVerticalScrollIndicator={false}
+  keyboardShouldPersistTaps="handled"
+>
+{/* Header */}
+<View style={styles.headerRow}>
+  <View style={{ width: 60 }}>
+    <BackButton />
+  </View>
+  <Text style={styles.title}>CUSTOM WORKOUT</Text>
+  <View style={{ width: 60, alignItems: 'flex-end' }}>
+    <WorkoutTimer
+      isPaused={isPaused}
+      onTogglePause={() => setIsPaused(!isPaused)}
+    />
+  </View>
+</View>
 
           {/* Workout name input */}
           <View style={styles.workoutNameContainer}>
@@ -263,7 +314,14 @@ const CustomWorkout = () => {
                       <Text style={styles.setText}>{setIndex + 1}</Text>
                     </View>
                     <View style={styles.setColumn}>
-                      <Text style={styles.previousText}>---</Text>
+                    <Text style={styles.previousText}>
+  {previousData[exerciseIndex] &&
+  previousData[exerciseIndex][setIndex] &&
+  previousData[exerciseIndex][setIndex].lbs &&
+  previousData[exerciseIndex][setIndex].reps
+    ? `${previousData[exerciseIndex][setIndex].lbs} x ${previousData[exerciseIndex][setIndex].reps}`
+    : "---"}
+</Text>
                     </View>
                     <View style={styles.setColumn}>
                       <TextInput
@@ -374,6 +432,7 @@ const CustomWorkout = () => {
             }}
           />
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );

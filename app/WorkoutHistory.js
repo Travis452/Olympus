@@ -68,7 +68,7 @@ const WorkoutHistory = () => {
       {item.exercises && item.exercises.length > 0 ? (
         item.exercises.map((exercise, idx) => (
           <View key={idx} style={{ marginBottom: 6 }}>
-            <Text style={[styles.setText, { fontWeight: "bold" }]}>{exercise.title}</Text>
+            <Text style={[styles.setText, { fontWeight: "bold", textTransform: "capitalize" }]}>{exercise.title}</Text>
             {exercise.sets && exercise.sets.length > 0 ? (
               exercise.sets.map((set, i) => (
                 <Text key={i} style={styles.setText}>

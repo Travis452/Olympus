@@ -149,8 +149,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#fff",
+    color: "#dc143c",
     textTransform: "capitalize",
+    textShadowColor: "#dc143c",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
   },
   setText: {
     fontSize: 14,

@@ -11,6 +11,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from "react-native";
 import {
   collection,
@@ -311,152 +314,162 @@ const StartWorkout = ({ route }) => {
       colors={["#000", "#1a1a1a", "#000"]}
       style={styles.gradient}
     >
-      <LoadingScreen isVisible={loadingVisible} />
-      <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.stickyHeader}>
-            <View style={styles.titleContainer}>
-              <BackButton destination="HomeScreen" />
-              <Text style={styles.title}>{title}</Text>
-              <WorkoutTimer
-                isPaused={isPaused}
-                onTogglePause={() => setIsPaused(!isPaused)}
-              />
-            </View>
-          </View>
-        </SafeAreaView>
-
-        {exercises &&
-          exercises.map((exercise, exerciseIndex) => (
-            <View key={exerciseIndex} style={styles.card}>
-              <Text style={styles.cardTitle}>{exercise.title}</Text>
-
-              <View style={styles.setHeaderRow}>
-                <Text style={styles.setHeaderText}>Set</Text>
-                <Text style={styles.setHeaderText}>Prev</Text>
-                <Text style={styles.setHeaderText}>lbs</Text>
-                <Text style={styles.setHeaderText}>Reps</Text>
-              </View>
-
-              {setInputs[exerciseIndex] &&
-                setInputs[exerciseIndex].map((set, setIndex) => (
-                  <View
-                    key={`${exerciseIndex}-${setIndex}`}
-                    style={styles.setRow}
-                  >
-                    <View style={styles.setColumn}>
-                      <Text style={styles.setText}>{setIndex + 1}</Text>
-                    </View>
-
-                    <View style={styles.setColumn}>
-                      <Text style={styles.previousText}>
-                        {previousData[exerciseIndex] &&
-                        previousData[exerciseIndex].sets &&
-                        previousData[exerciseIndex].sets[setIndex] &&
-                        previousData[exerciseIndex].sets[setIndex].lbs &&
-                        previousData[exerciseIndex].sets[setIndex].reps
-                          ? `${previousData[exerciseIndex].sets[setIndex].lbs} x ${previousData[exerciseIndex].sets[setIndex].reps}`
-                          : "---"}
-                      </Text>
-                    </View>
-
-                    <View style={styles.setColumn}>
-                      <TextInput
-                        style={styles.setInput}
-                        placeholder="lbs"
-                        placeholderTextColor="#666"
-                        keyboardType="numeric"
-                        returnKeyType="done"
-                        value={set.lbs}
-                        onChangeText={(value) =>
-                          handleInputChange(
-                            exerciseIndex,
-                            setIndex,
-                            "lbs",
-                            value,
-                          )
-                        }
-                      />
-                    </View>
-
-                    <View style={styles.setColumn}>
-                      <TextInput
-                        style={styles.setInput}
-                        placeholder="reps"
-                        placeholderTextColor="#666"
-                        keyboardType="numeric"
-                        returnKeyType="done"
-                        value={set.reps}
-                        onChangeText={(value) =>
-                          handleInputChange(
-                            exerciseIndex,
-                            setIndex,
-                            "reps",
-                            value,
-                          )
-                        }
-                      />
-                    </View>
-                  </View>
-                ))}
-
-              <TouchableOpacity
-                onPress={() => handleAddSet(exerciseIndex)}
-                style={styles.secondaryButton}
-              >
-                <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-
-        <TouchableOpacity style={styles.neonButton} onPress={handleSaveWorkout}>
-          <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
-        </TouchableOpacity>
-
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={finishModalVisible}
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Save Workout?</Text>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  onPress={saveWorkoutData}
-                  style={styles.modalButtonPrimary}
-                >
-                  <Text style={styles.modalButtonText}>SAVE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setFinishModalVisible(false)}
-                  style={styles.modalButtonSecondary}
-                >
-                  <Text
-                    style={[
-                      styles.modalButtonText,
-                      { color: "rgba(255,255,255,0.7)" },
-                    ]}
-                  >
-                    CANCEL
-                  </Text>
-                </TouchableOpacity>
+          <LoadingScreen isVisible={loadingVisible} />
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={{ paddingBottom: 300 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Header */}
+            <View style={styles.titleContainer}>
+              <View style={{ width: 60 }}>
+                <BackButton destination="HomeScreen" />
+              </View>
+              <Text style={styles.title}>{title}</Text>
+              <View style={{ width: 60, alignItems: "flex-end" }}>
+                <WorkoutTimer
+                  isPaused={isPaused}
+                  onTogglePause={() => setIsPaused(!isPaused)}
+                />
               </View>
             </View>
-          </View>
-        </Modal>
-
-        <WorkoutSummary
-          visible={workoutSummaryVisible}
-          performedExercises={performedExercises}
-          expGained={expGained}
-          finalExp={finalExp}
-          onClose={() => {
-            setWorkoutSummaryVisible(false);
-            navigation.navigate("HomeScreen");
-          }}
-        />
-      </ScrollView>
+  
+            {exercises &&
+              exercises.map((exercise, exerciseIndex) => (
+                <View key={exerciseIndex} style={styles.card}>
+                  <Text style={styles.cardTitle}>{exercise.title}</Text>
+  
+                  <View style={styles.setHeaderRow}>
+                    <Text style={styles.setHeaderText}>Set</Text>
+                    <Text style={styles.setHeaderText}>Prev</Text>
+                    <Text style={styles.setHeaderText}>lbs</Text>
+                    <Text style={styles.setHeaderText}>Reps</Text>
+                  </View>
+  
+                  {setInputs[exerciseIndex] &&
+                    setInputs[exerciseIndex].map((set, setIndex) => (
+                      <View
+                        key={`${exerciseIndex}-${setIndex}`}
+                        style={styles.setRow}
+                      >
+                        <View style={styles.setColumn}>
+                          <Text style={styles.setText}>{setIndex + 1}</Text>
+                        </View>
+  
+                        <View style={styles.setColumn}>
+                          <Text style={styles.previousText}>
+                            {previousData[exerciseIndex] &&
+                            previousData[exerciseIndex].sets &&
+                            previousData[exerciseIndex].sets[setIndex] &&
+                            previousData[exerciseIndex].sets[setIndex].lbs &&
+                            previousData[exerciseIndex].sets[setIndex].reps
+                              ? `${previousData[exerciseIndex].sets[setIndex].lbs} x ${previousData[exerciseIndex].sets[setIndex].reps}`
+                              : "---"}
+                          </Text>
+                        </View>
+  
+                        <View style={styles.setColumn}>
+                          <TextInput
+                            style={styles.setInput}
+                            placeholder="lbs"
+                            placeholderTextColor="#666"
+                            keyboardType="numeric"
+                            value={set.lbs}
+                            onChangeText={(value) =>
+                              handleInputChange(
+                                exerciseIndex,
+                                setIndex,
+                                "lbs",
+                                value,
+                              )
+                            }
+                          />
+                        </View>
+  
+                        <View style={styles.setColumn}>
+                          <TextInput
+                            style={styles.setInput}
+                            placeholder="reps"
+                            placeholderTextColor="#666"
+                            keyboardType="numeric"
+                            value={set.reps}
+                            onChangeText={(value) =>
+                              handleInputChange(
+                                exerciseIndex,
+                                setIndex,
+                                "reps",
+                                value,
+                              )
+                            }
+                          />
+                        </View>
+                      </View>
+                    ))}
+  
+                  <TouchableOpacity
+                    onPress={() => handleAddSet(exerciseIndex)}
+                    style={styles.secondaryButton}
+                  >
+                    <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+  
+            <TouchableOpacity style={styles.neonButton} onPress={handleSaveWorkout}>
+              <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
+            </TouchableOpacity>
+  
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={finishModalVisible}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Save Workout?</Text>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      onPress={saveWorkoutData}
+                      style={styles.modalButtonPrimary}
+                    >
+                      <Text style={styles.modalButtonText}>SAVE</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setFinishModalVisible(false)}
+                      style={styles.modalButtonSecondary}
+                    >
+                      <Text
+                        style={[
+                          styles.modalButtonText,
+                          { color: "rgba(255,255,255,0.7)" },
+                        ]}
+                      >
+                        CANCEL
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+  
+            <WorkoutSummary
+              visible={workoutSummaryVisible}
+              performedExercises={performedExercises}
+              expGained={expGained}
+              finalExp={finalExp}
+              onClose={() => {
+                setWorkoutSummaryVisible(false);
+                navigation.navigate("HomeScreen");
+              }}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </LinearGradient>
   );
 };

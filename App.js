@@ -57,6 +57,7 @@ const App = () => {
 
       setIsAppLoading(false);
     });
+    console.log('App render - currentUser:', currentUser?.uid, 'hasProfile:', hasProfile, 'profileChecked:', profileChecked);
 
     return unsubscribe;
   }, []);
