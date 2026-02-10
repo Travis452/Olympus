@@ -1,11 +1,10 @@
-
 import { initializeApp, getApps } from "firebase/app";
 import {
   initializeAuth,
   getAuth,
   getReactNativePersistence,
 } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   getFirestore,
@@ -46,7 +45,6 @@ const storage = getStorage(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-
 // Create User Profile with EXP & Level
 export const createUserProfile = async (userId, email) => {
   try {
@@ -58,7 +56,7 @@ export const createUserProfile = async (userId, email) => {
         exp: 0,
         level: 1,
       },
-      { merge: true }
+      { merge: true },
     );
 
     console.log("User profile created with EXP and Level");
@@ -68,12 +66,24 @@ export const createUserProfile = async (userId, email) => {
 };
 
 // Fetch User EXP
+// Fetch User EXP
 export const getUserEXP = async (userId) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
-      return userSnap.data();
+      const userData = userSnap.data();
+
+      // Convert Firestore Timestamps to ISO strings (serializable)
+      return {
+        ...userData,
+        createdAt:
+          userData.createdAt?.toDate?.().toISOString() ||
+          new Date().toISOString(),
+        updatedAt:
+          userData.updatedAt?.toDate?.().toISOString() ||
+          new Date().toISOString(),
+      };
     } else {
       console.log("No user data found");
       return null;
@@ -92,21 +102,21 @@ const getPreviousWorkout = async (userId, exerciseTitle) => {
         collection(db, "workouts"),
         where("userId", "==", userId),
         orderBy("timestamp", "desc"),
-        limit(1)
-      )
+        limit(1),
+      ),
     );
 
     if (!querySnapshot.empty) {
       const workoutData = querySnapshot.docs[0].data();
       const matchedExercise = workoutData.exercises.find(
         (exercise) =>
-          exercise.title.toLowerCase() === exerciseTitle.toLowerCase()
+          exercise.title.toLowerCase() === exerciseTitle.toLowerCase(),
       );
 
       if (matchedExercise) {
         console.log(
           `Previous workout found for ${exerciseTitle}:`,
-          matchedExercise.sets
+          matchedExercise.sets,
         );
         return matchedExercise.sets.length > 0 ? matchedExercise.sets[0] : null;
       }
@@ -150,7 +160,10 @@ export const updateUserStats = async (userId, stats, isVerified = false) => {
     }
 
     // Deadlift
-    if (stats.bestDeadlift && stats.bestDeadlift > (userData.bestDeadlift || 0)) {
+    if (
+      stats.bestDeadlift &&
+      stats.bestDeadlift > (userData.bestDeadlift || 0)
+    ) {
       updatedStats.bestDeadlift = stats.bestDeadlift;
       if (isVerified && stats.bestDeadlift > (userData.verifiedDeadlift || 0)) {
         updatedStats.verifiedDeadlift = stats.bestDeadlift;
@@ -167,7 +180,6 @@ export const updateUserStats = async (userId, stats, isVerified = false) => {
     console.error("Error updating user PR stats:", error);
   }
 };
-
 
 //  Update User EXP & Level
 export const updateUserEXP = async (userId, expToAdd) => {
@@ -203,8 +215,10 @@ export const updateUserEXP = async (userId, expToAdd) => {
     });
 
     console.log(
-      `User ${userId} updated to Level ${newLevel} with ${newExp} EXP`
+      `User ${userId} updated to Level ${newLevel} with ${newExp} EXP`,
     );
+
+    // Return only serializable data (no Firestore Timestamps)
     return { exp: newExp, level: newLevel };
   } catch (error) {
     console.error("Error updating EXP:", error);
@@ -239,14 +253,14 @@ const calculateProgressiveOverloadEXP = (
   prevWeight,
   prevReps,
   newWeight,
-  newReps
+  newReps,
 ) => {
   let expGain = 0;
 
   if (newWeight > prevWeight) {
     expGain += 25;
     console.log(
-      `Weight increased from ${prevWeight} to ${newWeight} (+25 EXP)`
+      `Weight increased from ${prevWeight} to ${newWeight} (+25 EXP)`,
     );
   }
 
@@ -286,16 +300,18 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     for (const exercise of exercises) {
       const { title, sets } = exercise;
       const liftType = EXERCISE_TAGS[title]; // defined only for Big 3
-    
+
       // Get last logged workout for this exercise
       const previousWorkout = await getPreviousWorkout(userId, title);
-      let prevWeight = previousWorkout ? parseFloat(previousWorkout.lbs || 0) : 0;
+      let prevWeight = previousWorkout
+        ? parseFloat(previousWorkout.lbs || 0)
+        : 0;
       let prevReps = previousWorkout ? parseInt(previousWorkout.reps || 0) : 0;
-    
+
       for (const set of sets) {
         const weight = parseFloat(set.lbs || 0);
         const reps = parseInt(set.reps || 0);
-    
+
         if (!previousWorkout) {
           // ✅ First time doing THIS lift → reps-based EXP
           const baseEXP = reps * 2;
@@ -307,22 +323,21 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
             prevWeight,
             prevReps,
             weight,
-            reps
+            reps,
           );
           totalEXP += overloadEXP;
         }
-    
+
         // 🏆 Big 3: only these get benchmark checks + leaderboard relevance
         if (liftType && STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
           totalEXP += 250;
           requiresVerification = true;
           console.log(
-            `🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`
+            `🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`,
           );
         }
       }
     }
-    
 
     exp += totalEXP;
 
@@ -333,12 +348,12 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     });
 
     console.log(`User ${userId} gained ${totalEXP} EXP. New total: ${exp}`);
+
+    // Return only serializable data (no Firestore Timestamps)
     return { exp, level };
   } catch (error) {
     console.error("Error awarding EXP:", error);
   }
 };
-
-
 
 export { auth, db, storage };

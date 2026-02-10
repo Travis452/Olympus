@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   TextInput,
   Animated,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const RED = "#dc143c";
 
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const MIN_FETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes between API calls
+
 const LoadingOverlay = () => {
-  const pulseAnim = new Animated.Value(0.3);
+  const pulseAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -29,7 +33,7 @@ const LoadingOverlay = () => {
           duration: 800,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   }, []);
 
@@ -45,56 +49,121 @@ const LoadingOverlay = () => {
 
 const Exercises = ({ onClose, onSelect }) => {
   const [exercises, setExercises] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredExercises, setFilteredExercises] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
 
-  useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        // Check cache first
-        const cached = await AsyncStorage.getItem("exerciseDB");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          setExercises(parsed);
-          setFilteredExercises(parsed);
-          setLoading(false);
-          return;
-        }
+  // Check if cache is valid
+  const isCacheValid = async (cacheKey) => {
+    try {
+      const cached = await AsyncStorage.getItem(cacheKey);
+      const cacheTimestamp = await AsyncStorage.getItem(
+        `${cacheKey}_timestamp`,
+      );
 
-        // Fetch from API if no cache
-        const response = await fetch(
-          "https://exercisedb.p.rapidapi.com/exercises?limit=0&offset=0",
-          {
-            method: "GET",
-            headers: {
-              "X-RapidAPI-Key": "af77d413eamsh0c2a0d3d9880799p182697jsnb18404139001",
-              "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
-            },
-          }
-        );
-        const data = await response.json();
-        setExercises(data);
-        setFilteredExercises(data);
+      if (!cached || !cacheTimestamp) return null;
 
-        // Save to cache
-        await AsyncStorage.setItem("exerciseDB", JSON.stringify(data));
-      } catch (error) {
-        console.error("Error fetching exercises:", error);
-      } finally {
-        setLoading(false);
+      const age = Date.now() - parseInt(cacheTimestamp);
+
+      if (age < CACHE_DURATION) {
+        return JSON.parse(cached);
       }
-    };
 
-    fetchExercises();
-  }, []);
+      return null;
+    } catch (error) {
+      console.error("Cache check error:", error);
+      return null;
+    }
+  };
+
+  // Search API with rate limiting protection
+  const searchAPI = async (query) => {
+    if (query.length < 2) {
+      setExercises([]);
+      return;
+    }
+
+    setSearching(true);
+
+    try {
+      // Check if we have a cached search result
+      const searchCacheKey = `search_${query.toLowerCase().trim()}`;
+      const cachedSearch = await isCacheValid(searchCacheKey);
+
+      if (cachedSearch) {
+        setExercises(cachedSearch);
+        setSearching(false);
+        return;
+      }
+
+      const response = await fetch(
+        `https://exercisedb.dev/api/v1/exercises/search?q=${encodeURIComponent(query)}&limit=25`,
+      );
+
+      if (response.status === 429) {
+        setRateLimited(true);
+        setSearching(false);
+        // Use cached search if available
+        const cached = await AsyncStorage.getItem(searchCacheKey);
+        if (cached) {
+          setExercises(JSON.parse(cached));
+        }
+        return;
+      }
+
+      if (!response.ok) {
+        console.log("Search failed:", response.status);
+        setSearching(false);
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const formattedExercises = result.data.map((ex) => ({
+          id: ex.exerciseId,
+          name: ex.name,
+          gifUrl: ex.gifUrl,
+          target: ex.targetMuscles?.[0] || "N/A",
+          equipment: ex.equipments?.[0] || "bodyweight",
+          instructions: ex.instructions || [],
+        }));
+
+        setExercises(formattedExercises);
+
+        // Cache search results
+        await AsyncStorage.setItem(
+          searchCacheKey,
+          JSON.stringify(formattedExercises),
+        );
+        await AsyncStorage.setItem(
+          `${searchCacheKey}_timestamp`,
+          Date.now().toString(),
+        );
+
+        setRateLimited(false);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-    const filtered = exercises.filter((exercise) =>
-      exercise.name.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredExercises(filtered);
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim().length >= 2) {
+      searchAPI(searchQuery.trim());
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setExercises([]);
   };
 
   if (loading) {
@@ -107,28 +176,68 @@ const Exercises = ({ onClose, onSelect }) => {
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
+        <Text style={styles.headerHint}>
+          {rateLimited
+            ? "⚠️ Rate limited - using cache"
+            : "Search for exercises"}
+        </Text>
       </View>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search exercises..."
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={handleSearch}
-      />
 
-      <FlatList
-        data={filteredExercises}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => onSelect(item)} style={styles.card}>
-<Image source={{ uri: item.gifUrl }} style={styles.image} />
-            <View style={styles.infoContainer}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.secondary}>Target: {item.target}</Text>
-            </View>
+      {/* Search Input */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search exercises (press Enter)..."
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={handleSearch}
+          onSubmitEditing={handleSearchSubmit}
+          returnKeyType="search"
+          autoFocus
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={handleClearSearch}
+            style={styles.clearButton}
+          >
+            <Text style={styles.clearButtonText}>✕</Text>
           </TouchableOpacity>
         )}
-      />
+      </View>
+
+      {searching ? (
+        <View style={styles.searchingContainer}>
+          <ActivityIndicator size="large" color={RED} />
+          <Text style={styles.searchingText}>Searching...</Text>
+        </View>
+      ) : exercises.length > 0 ? (
+        <FlatList
+          data={exercises}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => onSelect(item)}
+              style={styles.card}
+            >
+              <Image source={{ uri: item.gifUrl }} style={styles.image} />
+              <View style={styles.infoContainer}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.secondary}>Target: {item.target}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            {searchQuery.length > 0 && searchQuery.length < 2
+              ? "Type at least 2 characters and press Enter"
+              : searchQuery.length >= 2
+                ? "No exercises found"
+                : "🔍 Search for exercises by name, muscle, or equipment"}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -162,6 +271,71 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     fontSize: 14,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  closeText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    padding: 8,
+  },
+  headerHint: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    paddingRight: 8,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    position: "relative",
+  },
+  searchInput: {
+    flex: 1,
+    color: "#fff",
+    backgroundColor: "#2a2a2a",
+    borderWidth: 1,
+    borderColor: "#444",
+    borderRadius: 10,
+    padding: 12,
+    paddingRight: 40,
+    fontSize: 16,
+  },
+  clearButton: {
+    position: "absolute",
+    right: 10,
+    padding: 5,
+  },
+  clearButtonText: {
+    color: "#888",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  searchingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  searchingText: {
+    color: "rgba(255,255,255,0.5)",
+    marginTop: 10,
+    fontSize: 14,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "rgba(255,255,255,0.5)",
+    textAlign: "center",
+    fontSize: 16,
+    paddingHorizontal: 40,
+  },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -170,36 +344,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  header: {
-    alignItems: "flex-start",
-    marginBottom: 10,
-  },
-  closeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-    padding: 8,
-    marginTop: 5,
-  },
   image: {
     width: 60,
     height: 60,
     borderRadius: 8,
     marginRight: 10,
+    backgroundColor: "#333",
   },
   infoContainer: {
     flex: 1,
     flexShrink: 1,
-  },
-  searchInput: {
-    color: "#fff",
-    backgroundColor: "#2a2a2a",
-    borderWidth: 1,
-    borderColor: "#444",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    fontSize: 16,
   },
   name: {
     fontSize: 16,

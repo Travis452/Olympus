@@ -15,7 +15,17 @@ import {
 
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
-import { collection, addDoc, getDoc, getDocs, doc, query, where, orderBy, limit } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  query,
+  where,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 import { db, awardEXP, updateUserStats } from "../config/firebase";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -47,28 +57,27 @@ const CustomWorkout = () => {
   const [previousData, setPreviousData] = useState([]);
   const scrollViewRef = useRef(null);
 
-
   const fetchPreviousForExercise = async (exerciseName) => {
     try {
       if (!currentUser) return null;
-  
+
       const q = query(
         collection(db, "workouts"),
         where("userId", "==", currentUser.uid),
         orderBy("timestamp", "desc"),
-        limit(20)
+        limit(20),
       );
-  
+
       const snapshot = await getDocs(q);
-  
+
       for (const doc of snapshot.docs) {
         const workout = doc.data();
         const match = workout.exercises?.find(
-          (ex) => (ex.title || "").toLowerCase() === exerciseName.toLowerCase()
+          (ex) => (ex.title || "").toLowerCase() === exerciseName.toLowerCase(),
         );
         if (match) return match.sets;
       }
-  
+
       return null;
     } catch (error) {
       console.error("Error fetching previous data:", error);
@@ -76,9 +85,9 @@ const CustomWorkout = () => {
     }
   };
 
-const scrollToInput = (reactNode) => {
-  scrollViewRef.current?.scrollTo({ y: reactNode, animated: true });
-};
+  const scrollToInput = (reactNode) => {
+    scrollViewRef.current?.scrollTo({ y: reactNode, animated: true });
+  };
 
   const dispatch = useDispatch();
   const timer = useSelector((state) => state.timer.seconds);
@@ -116,7 +125,7 @@ const scrollToInput = (reactNode) => {
     setSelectedExercises((prev) => [...prev, exercise]);
     setSetInputs((prev) => [...prev, [{ lbs: "", reps: "" }]]);
     setShowExerciseModal(false);
-  
+
     const prevSets = await fetchPreviousForExercise(exercise.name);
     setPreviousData((prev) => [...prev, prevSets || []]);
   };
@@ -239,8 +248,6 @@ const scrollToInput = (reactNode) => {
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase());
 
-
-
   return (
     <LinearGradient
       colors={["#000000", "#050816", "#190000"]}
@@ -249,189 +256,198 @@ const scrollToInput = (reactNode) => {
       <SafeAreaView style={{ flex: 1 }}>
         <LoadingScreen isVisible={loadingVisible} />
         <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}>
-        <ScrollView
-  ref={scrollViewRef}
-  contentContainerStyle={{ paddingBottom: 300 }}
-  showsVerticalScrollIndicator={false}
-  keyboardShouldPersistTaps="handled"
->
-{/* Header */}
-<View style={styles.headerRow}>
-  <View style={{ width: 60 }}>
-    <BackButton />
-  </View>
-  <Text style={styles.title}>CUSTOM WORKOUT</Text>
-  <View style={{ width: 60, alignItems: 'flex-end' }}>
-    <WorkoutTimer
-      isPaused={isPaused}
-      onTogglePause={() => setIsPaused(!isPaused)}
-    />
-  </View>
-</View>
-
-          {/* Workout name input */}
-          <View style={styles.workoutNameContainer}>
-            <Text style={styles.workoutNameLabel}>Workout Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter workout name..."
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-
-          {/* Exercise cards */}
-          {selectedExercises.map((exercise, exerciseIndex) => (
-            <View key={exerciseIndex} style={styles.card}>
-              <Text style={styles.cardTitle}>
-                {capitalizeWords(exercise.name)}
-              </Text>
-
-              {/* Set header row */}
-              <View style={styles.setHeaderRow}>
-                <View style={styles.setColumn}>
-                  <Text style={styles.setHeaderText}>Set</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.setHeaderText}>Prev</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.setHeaderText}>lbs</Text>
-                </View>
-                <View style={styles.setColumn}>
-                  <Text style={styles.setHeaderText}>Reps</Text>
-                </View>
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={{ paddingBottom: 300 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Header */}
+            <View style={styles.headerRow}>
+              <View style={{ width: 60 }}>
+                <BackButton />
               </View>
-
-              {/* Sets */}
-              {setInputs[exerciseIndex] &&
-                setInputs[exerciseIndex].map((set, setIndex) => (
-                  <View key={setIndex} style={styles.setRow}>
-                    <View style={styles.setColumn}>
-                      <Text style={styles.setText}>{setIndex + 1}</Text>
-                    </View>
-                    <View style={styles.setColumn}>
-                    <Text style={styles.previousText}>
-  {previousData[exerciseIndex] &&
-  previousData[exerciseIndex][setIndex] &&
-  previousData[exerciseIndex][setIndex].lbs &&
-  previousData[exerciseIndex][setIndex].reps
-    ? `${previousData[exerciseIndex][setIndex].lbs} x ${previousData[exerciseIndex][setIndex].reps}`
-    : "---"}
-</Text>
-                    </View>
-                    <View style={styles.setColumn}>
-                      <TextInput
-                        style={styles.setInput}
-                        placeholder="lbs"
-                        placeholderTextColor="rgba(255,255,255,0.5)"
-                        keyboardType="numeric"
-                        value={set.lbs}
-                        onChangeText={(val) =>
-                          handleInputChange(exerciseIndex, setIndex, "lbs", val)
-                        }
-                      />
-                    </View>
-                    <View style={styles.setColumn}>
-                      <TextInput
-                        style={styles.setInput}
-                        placeholder="reps"
-                        placeholderTextColor="rgba(255,255,255,0.5)"
-                        keyboardType="numeric"
-                        value={set.reps}
-                        onChangeText={(val) =>
-                          handleInputChange(
-                            exerciseIndex,
-                            setIndex,
-                            "reps",
-                            val,
-                          )
-                        }
-                      />
-                    </View>
-                  </View>
-                ))}
-
-              <TouchableOpacity
-                onPress={() => handleAddSet(exerciseIndex)}
-                style={styles.secondaryButton}
-              >
-                <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {/* Add Exercise */}
-          <TouchableOpacity onPress={openModal} style={styles.neonButton}>
-            <Text style={styles.neonButtonText}>+ ADD EXERCISE</Text>
-          </TouchableOpacity>
-
-          {/* Save Workout */}
-          <TouchableOpacity
-            style={[styles.neonButton, { marginTop: 10 }]}
-            onPress={handleSaveWorkout}
-          >
-            <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
-          </TouchableOpacity>
-
-          {/* Exercise picker modal */}
-          <Modal
-            visible={showExerciseModal}
-            animationType="fade"
-            transparent={true}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.fullscreenModalContent}>
-                <Exercises onClose={closeModal} onSelect={handleAddExercise} />
+              <Text style={styles.title}>CUSTOM WORKOUT</Text>
+              <View style={{ width: 60, alignItems: "flex-end" }}>
+                <WorkoutTimer
+                  isPaused={isPaused}
+                  onTogglePause={() => setIsPaused(!isPaused)}
+                />
               </View>
             </View>
-          </Modal>
 
-          {/* Confirm save modal */}
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={finishModalVisible}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Save Workout?</Text>
-                <Text style={styles.modalBodyText}>
-                  This will log your workout and update your EXP.
+            {/* Workout name input */}
+            <View style={styles.workoutNameContainer}>
+              <Text style={styles.workoutNameLabel}>Workout Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter workout name..."
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
+
+            {/* Exercise cards */}
+            {selectedExercises.map((exercise, exerciseIndex) => (
+              <View key={exerciseIndex} style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  {capitalizeWords(exercise.name)}
                 </Text>
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    onPress={saveWorkoutData}
-                    style={styles.modalButtonPrimary}
-                  >
-                    <Text style={styles.modalButtonText}>SAVE</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setFinishModalVisible(false)}
-                    style={styles.modalButtonSecondary}
-                  >
-                    <Text style={styles.modalButtonText}>CANCEL</Text>
-                  </TouchableOpacity>
+
+                {/* Set header row */}
+                <View style={styles.setHeaderRow}>
+                  <View style={styles.setColumn}>
+                    <Text style={styles.setHeaderText}>Set</Text>
+                  </View>
+                  <View style={styles.setColumn}>
+                    <Text style={styles.setHeaderText}>Prev</Text>
+                  </View>
+                  <View style={styles.setColumn}>
+                    <Text style={styles.setHeaderText}>lbs</Text>
+                  </View>
+                  <View style={styles.setColumn}>
+                    <Text style={styles.setHeaderText}>Reps</Text>
+                  </View>
+                </View>
+
+                {/* Sets */}
+                {setInputs[exerciseIndex] &&
+                  setInputs[exerciseIndex].map((set, setIndex) => (
+                    <View key={setIndex} style={styles.setRow}>
+                      <View style={styles.setColumn}>
+                        <Text style={styles.setText}>{setIndex + 1}</Text>
+                      </View>
+                      <View style={styles.setColumn}>
+                        <Text style={styles.previousText}>
+                          {previousData[exerciseIndex] &&
+                          previousData[exerciseIndex][setIndex] &&
+                          previousData[exerciseIndex][setIndex].lbs &&
+                          previousData[exerciseIndex][setIndex].reps
+                            ? `${previousData[exerciseIndex][setIndex].lbs} x ${previousData[exerciseIndex][setIndex].reps}`
+                            : "---"}
+                        </Text>
+                      </View>
+                      <View style={styles.setColumn}>
+                        <TextInput
+                          style={styles.setInput}
+                          placeholder="lbs"
+                          placeholderTextColor="rgba(255,255,255,0.5)"
+                          keyboardType="numeric"
+                          value={set.lbs}
+                          onChangeText={(val) =>
+                            handleInputChange(
+                              exerciseIndex,
+                              setIndex,
+                              "lbs",
+                              val,
+                            )
+                          }
+                        />
+                      </View>
+                      <View style={styles.setColumn}>
+                        <TextInput
+                          style={styles.setInput}
+                          placeholder="reps"
+                          placeholderTextColor="rgba(255,255,255,0.5)"
+                          keyboardType="numeric"
+                          value={set.reps}
+                          onChangeText={(val) =>
+                            handleInputChange(
+                              exerciseIndex,
+                              setIndex,
+                              "reps",
+                              val,
+                            )
+                          }
+                        />
+                      </View>
+                    </View>
+                  ))}
+
+                <TouchableOpacity
+                  onPress={() => handleAddSet(exerciseIndex)}
+                  style={styles.secondaryButton}
+                >
+                  <Text style={styles.secondaryButtonText}>+ ADD SET</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {/* Add Exercise */}
+            <TouchableOpacity onPress={openModal} style={styles.neonButton}>
+              <Text style={styles.neonButtonText}>+ ADD EXERCISE</Text>
+            </TouchableOpacity>
+
+            {/* Save Workout */}
+            <TouchableOpacity
+              style={[styles.neonButton, { marginTop: 10 }]}
+              onPress={handleSaveWorkout}
+            >
+              <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
+            </TouchableOpacity>
+
+            {/* Exercise picker modal */}
+            <Modal
+              visible={showExerciseModal}
+              animationType="fade"
+              transparent={true}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.fullscreenModalContent}>
+                  <Exercises
+                    onClose={closeModal}
+                    onSelect={handleAddExercise}
+                  />
                 </View>
               </View>
-            </View>
-          </Modal>
+            </Modal>
 
-          {/* Summary modal */}
-          <WorkoutSummary
-            visible={workoutSummaryVisible}
-            performedExercises={performedExercises}
-            expGained={expGained}
-            finalExp={finalExp}
-            onClose={() => {
-              setWorkoutSummaryVisible(false);
-              navigation.navigate("HomeScreen");
-            }}
-          />
-        </ScrollView>
+            {/* Confirm save modal */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={finishModalVisible}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Save Workout?</Text>
+                  <Text style={styles.modalBodyText}>
+                    This will log your workout and update your EXP.
+                  </Text>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      onPress={saveWorkoutData}
+                      style={styles.modalButtonPrimary}
+                    >
+                      <Text style={styles.modalButtonText}>SAVE</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setFinishModalVisible(false)}
+                      style={styles.modalButtonSecondary}
+                    >
+                      <Text style={styles.modalButtonText}>CANCEL</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Summary modal */}
+            <WorkoutSummary
+              visible={workoutSummaryVisible}
+              performedExercises={performedExercises}
+              expGained={expGained}
+              finalExp={finalExp}
+              onClose={() => {
+                setWorkoutSummaryVisible(false);
+                navigation.navigate("HomeScreen");
+              }}
+            />
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
@@ -458,7 +474,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: 4,
     letterSpacing: 3,
   },
 
@@ -490,9 +506,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 18,
     shadowColor: RED,
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cardTitle: {
     color: RED,
@@ -501,7 +517,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
     textShadowColor: RED,
-    textShadowRadius: 5,
+    textShadowRadius: 3,
   },
 
   setHeaderRow: {
@@ -562,9 +578,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
     shadowColor: RED,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   modalButtons: {
@@ -585,9 +601,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
     shadowColor: RED,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   modalButtonSecondary: {
@@ -622,6 +638,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     backgroundColor: "rgba(0,0,0,0.7)",
+    // NO shadow properties here - removes the glow
   },
   secondaryButtonText: {
     color: RED,
@@ -654,7 +671,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalBodyText: {
-    color: "black",
+    color: "#fff", // Changed from black to white
     fontSize: 14,
     marginBottom: 12,
     textAlign: "center",
