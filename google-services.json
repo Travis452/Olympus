@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "939160989913",
+    "project_id": "olympus-43444",
+    "storage_bucket": "olympus-43444.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939160989913:android:81e52be885cd0541e1cec8",
+        "android_client_info": {
+          "package_name": "com.arcstar.olympus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939160989913-r39ur9ee6csc6t53s7hk49np0cu5dfu5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu6vXuUlKf1kt4DIlnvFOhChjHHvt4rTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "939160989913-r39ur9ee6csc6t53s7hk49np0cu5dfu5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "939160989913-7ao70cf01iqjjtoe1dav6onu7s68gure.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "Eclipse"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

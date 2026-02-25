@@ -142,6 +142,12 @@ const CustomWorkout = () => {
     setSetInputs(updatedInputs);
   };
 
+  const handleRemoveExercise = (exerciseIndex) => {
+    setSelectedExercises((prev) => prev.filter((_, i) => i !== exerciseIndex));
+    setSetInputs((prev) => prev.filter((_, i) => i !== exerciseIndex));
+    setPreviousData((prev) => prev.filter((_, i) => i !== exerciseIndex));
+  };
+
   const handleSaveWorkout = () => {
     setFinishModalVisible(true);
   };
@@ -294,9 +300,18 @@ const CustomWorkout = () => {
             {/* Exercise cards */}
             {selectedExercises.map((exercise, exerciseIndex) => (
               <View key={exerciseIndex} style={styles.card}>
-                <Text style={styles.cardTitle}>
-                  {capitalizeWords(exercise.name)}
-                </Text>
+                {/* Exercise title with remove button */}
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>
+                    {capitalizeWords(exercise.name)}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveExercise(exerciseIndex)}
+                    style={styles.removeButton}
+                  >
+                    <Text style={styles.removeButtonText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
 
                 {/* Set header row */}
                 <View style={styles.setHeaderRow}>
@@ -487,7 +502,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // reused from Profile style
   input: {
     backgroundColor: "#000",
     color: "#fff",
@@ -510,14 +524,43 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
   cardTitle: {
     color: RED,
     fontSize: 18,
     fontFamily: "Orbitron_700Bold",
-    marginBottom: 12,
-    textAlign: "center",
     textShadowColor: RED,
     textShadowRadius: 3,
+    flex: 1,
+    textAlign: "center",
+  },
+
+  removeButton: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,26,26,0.2)",
+    borderWidth: 1,
+    borderColor: RED,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  removeButtonText: {
+    color: RED,
+    fontSize: 18,
+    fontWeight: "bold",
+    lineHeight: 20,
   },
 
   setHeaderRow: {
@@ -638,7 +681,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     backgroundColor: "rgba(0,0,0,0.7)",
-    // NO shadow properties here - removes the glow
   },
   secondaryButtonText: {
     color: RED,
@@ -671,7 +713,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalBodyText: {
-    color: "#fff", // Changed from black to white
+    color: "#fff",
     fontSize: 14,
     marginBottom: 12,
     textAlign: "center",

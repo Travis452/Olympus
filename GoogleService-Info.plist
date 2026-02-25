@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>939160989913-7ao70cf01iqjjtoe1dav6onu7s68gure.apps.googleusercontent.com</string>
+	<string>939160989913-av50nfeh3cbckujdd4hnsrknb2oi875c.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.939160989913-7ao70cf01iqjjtoe1dav6onu7s68gure</string>
+	<string>com.googleusercontent.apps.939160989913-av50nfeh3cbckujdd4hnsrknb2oi875c</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBijfxRROppXi-l-AYcPXBGO89r05oaP3o</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>Eclipse</string>
+	<string>com.arcstar.Olympus</string>
 	<key>PROJECT_ID</key>
 	<string>olympus-43444</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:939160989913:ios:07b79a9860463413e1cec8</string>
+	<string>1:939160989913:ios:d383ce8a5b42e279e1cec8</string>
 </dict>
 </plist>
