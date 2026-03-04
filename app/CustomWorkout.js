@@ -39,7 +39,7 @@ import WorkoutSummary from "../components/WorkoutSummary";
 
 const RED = "#ff1a1a";
 
-const CustomWorkout = () => {
+const CustomWorkout = ({ route }) => {
   const navigation = useNavigation();
   const [workoutSummaryVisible, setWorkoutSummaryVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -101,6 +101,33 @@ const CustomWorkout = () => {
     );
     return unsub;
   }, [auth]);
+
+  // Load workout from history if passed via navigation
+  useEffect(() => {
+    if (route.params?.loadedWorkout) {
+      const loaded = route.params.loadedWorkout;
+      
+      // Set workout title
+      setTitle(loaded.workoutTitle || "Custom Workout");
+      
+      // Load exercises
+      const exercises = loaded.exercises.map((ex) => ({
+        name: ex.title,
+        title: ex.title,
+      }));
+      setSelectedExercises(exercises);
+      
+      // Initialize empty sets for new workout, but store previous data
+      const initialSets = loaded.exercises.map(() => [{ lbs: "", reps: "" }]);
+      setSetInputs(initialSets);
+      
+      // Store previous sets as reference
+      const previousSets = loaded.exercises.map((ex) => ex.sets || []);
+      setPreviousData(previousSets);
+      
+      console.log("✅ Loaded workout:", loaded.workoutTitle);
+    }
+  }, [route.params]);
 
   const openModal = () => {
     setShowExerciseModal(true);
@@ -530,6 +557,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
+    paddingRight: 30,
   },
 
   cardTitle: {
@@ -539,28 +567,22 @@ const styles = StyleSheet.create({
     textShadowColor: RED,
     textShadowRadius: 3,
     flex: 1,
-    textAlign: "center",
   },
 
   removeButton: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,26,26,0.2)",
-    borderWidth: 1,
-    borderColor: RED,
+    top: -8,
+    right: -8,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
   },
 
   removeButtonText: {
     color: RED,
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
-    lineHeight: 20,
   },
 
   setHeaderRow: {

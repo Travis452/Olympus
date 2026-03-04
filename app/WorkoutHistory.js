@@ -6,16 +6,19 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase";
 import useAuth from "../hooks/useAuth";
+import { useNavigation } from "@react-navigation/native";
 
 const RED = "#ff1a1a";
 
 const WorkoutHistory = () => {
   const { user } = useAuth();
+  const navigation = useNavigation();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +56,12 @@ const WorkoutHistory = () => {
     fetchWorkouts();
   }, [user]);
 
+  const handleLoadWorkout = (workout) => {
+    navigation.navigate("CustomWorkout", {
+      loadedWorkout: workout,
+    });
+  };
+
   const renderWorkout = ({ item }) => (
     <View style={styles.card}>
       {/* Use workoutTitle from Firestore */}
@@ -83,9 +92,16 @@ const WorkoutHistory = () => {
       ) : (
         <Text style={styles.setText}>No exercises logged</Text>
       )}
+
+      {/* Load Workout Button */}
+      <TouchableOpacity
+        onPress={() => handleLoadWorkout(item)}
+        style={styles.loadButton}
+      >
+        <Text style={styles.loadButtonText}>LOAD WORKOUT</Text>
+      </TouchableOpacity>
     </View>
   );
-  
 
   return (
     <LinearGradient
@@ -113,7 +129,7 @@ const WorkoutHistory = () => {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    paddingTop: 100, // push content down a bit
+    paddingTop: 100,
     paddingHorizontal: 20,
   },
   title: {
@@ -164,6 +180,26 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     marginTop: 2,
+  },
+  loadButton: {
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  loadButtonText: {
+    color: RED,
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 2,
   },
 });
 
