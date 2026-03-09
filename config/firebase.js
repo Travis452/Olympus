@@ -66,7 +66,6 @@ export const createUserProfile = async (userId, email) => {
 };
 
 // Fetch User EXP
-// Fetch User EXP
 export const getUserEXP = async (userId) => {
   try {
     const userRef = doc(db, "users", userId);
@@ -272,7 +271,7 @@ const calculateProgressiveOverloadEXP = (
   return expGain;
 };
 
-// Award EXP (Now Progressive Overload EXP is Applied Correctly)
+// Award EXP (Now with Streak Tracking!)
 export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
   try {
     const userRef = doc(db, "users", userId);
@@ -341,16 +340,42 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
 
     exp += totalEXP;
 
+    // 🔥 STREAK CALCULATION
+    const now = new Date();
+    const lastWorkoutDate = userData.lastWorkoutDate?.toDate?.() || null;
+    let currentStreak = userData.currentStreak || 0;
+
+    if (!lastWorkoutDate) {
+      // First workout ever
+      currentStreak = 1;
+      console.log("🔥 First workout! Streak started: 1 day");
+    } else {
+      const hoursSinceLastWorkout = (now - lastWorkoutDate) / (1000 * 60 * 60);
+      
+      if (hoursSinceLastWorkout <= 48) {
+        // Within 48 hours - increment streak
+        currentStreak += 1;
+        console.log(`🔥 Streak continued! Now at ${currentStreak} days`);
+      } else {
+        // Broke streak - reset to 1
+        console.log(`💔 Streak broken after ${currentStreak} days. Resetting to 1.`);
+        currentStreak = 1;
+      }
+    }
+
     await updateDoc(userRef, {
       exp,
       level,
       completedWorkouts: (userData.completedWorkouts || 0) + 1,
+      lastWorkoutDate: now,
+      currentStreak: currentStreak,
     });
 
     console.log(`User ${userId} gained ${totalEXP} EXP. New total: ${exp}`);
+    console.log(`🔥 Current streak: ${currentStreak} days`);
 
     // Return only serializable data (no Firestore Timestamps)
-    return { exp, level };
+    return { exp, level, currentStreak };
   } catch (error) {
     console.error("Error awarding EXP:", error);
   }

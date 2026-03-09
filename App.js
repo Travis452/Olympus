@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StatusBar } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
@@ -9,6 +10,7 @@ import store, { persistor } from "./src/redux/store";
 import MainStackNavigator from "./app/MainStackNavigator";
 import AuthNavigation from "./app/AuthNavigation";
 import { db } from "./config/firebase";
+import { initializeNotifications } from "./utils/notificationService";
 import {
   useFonts,
   Orbitron_400Regular,
@@ -40,6 +42,10 @@ const App = () => {
 
           if (docSnap.exists()) {
             setHasProfile(true);
+            
+            // 🔥 Initialize notifications when user logs in
+            await initializeNotifications(user.uid, 18, 0); // 6 PM default
+            console.log("✅ Notifications initialized for user:", user.uid);
           } else {
             setHasProfile(false);
           }

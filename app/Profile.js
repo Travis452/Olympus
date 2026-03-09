@@ -10,7 +10,7 @@ import {
   TextInput,
   Modal,
 } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +25,7 @@ import { db, storage } from "../config/firebase";
 const RED = "#ff1a1a";
 
 const Profile = () => {
+  const navigation = useNavigation();
   const { user, completedWorkouts } = useAuth();
   const dispatch = useDispatch();
   const { exp, level } = useSelector((state) => state.user);
@@ -218,7 +219,6 @@ const Profile = () => {
           </View>
 
           {/* EXP + Level */}
-
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>Level {level}</Text>
             <View style={styles.expBarContainer}>
@@ -247,14 +247,18 @@ const Profile = () => {
             </Text>
           </View>
 
-          {/* Edit Button */}
+          {/* Edit Profile Button */}
           <TouchableOpacity style={styles.neonButton} onPress={openEditModal}>
             <Text style={styles.neonButtonText}>EDIT PROFILE</Text>
           </TouchableOpacity>
-          {/* 
-          <TouchableOpacity onPress={handleLogout}>
-            <Text style={{ color: "white" }}>Log Out</Text>
-          </TouchableOpacity> */}
+
+          {/* Notification Settings Button */}
+          <TouchableOpacity 
+            style={styles.neonButton} 
+            onPress={() => navigation.navigate('NotificationSettings')}
+          >
+            <Text style={styles.neonButtonText}>NOTIFICATIONS</Text>
+          </TouchableOpacity>
 
           {/* Edit Modal */}
           <Modal
@@ -385,19 +389,18 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.2)", // grey background directly on container
+    backgroundColor: "rgba(255,255,255,0.2)",
     marginTop: 10,
   },
-
   expBarFill: {
     height: "100%",
     backgroundColor: "#ff1a1a",
     borderRadius: 6,
   },
-
   expText: {
     color: "#fff",
     fontWeight: "600",
+    marginTop: 5,
   },
   card: {
     backgroundColor: "rgba(255,26,26,0.05)",
