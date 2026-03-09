@@ -175,89 +175,99 @@ const StartWorkout = ({ route }) => {
     setFinishModalVisible(false);
 
     try {
-      if (currentUser) {
-        setWorkoutDuration(timer);
+      if (!currentUser) {
+        console.error("User is not authenticated");
+        setLoadingVisible(false);
+        return;
+      }
 
-        let completedExercises = [];
+      setWorkoutDuration(timer);
 
-        exercises.forEach((exercise, exerciseIndex) => {
-          const validSets =
-            setInputs[exerciseIndex]?.filter(
-              (set) => set.lbs !== "" && set.reps !== "",
-            ) || [];
+      let completedExercises = [];
 
-          if (validSets.length > 0) {
-            completedExercises.push({
-              title: exercise.title,
-              sets: validSets,
-            });
-          }
-        });
+      selectedExercises.forEach((exercise, exerciseIndex) => {
+        const validSets =
+          setInputs[exerciseIndex]
+            ?.filter((set) => {
+              // Only require reps to be filled - weight can be empty (defaults to 0)
+              return set.reps !== "" && set.reps !== null;
+            })
+            .map((set) => ({
+              // Default weight to 0 if empty (for bodyweight exercises)
+              lbs: set.lbs === "" || set.lbs === null ? "0" : set.lbs,
+              reps: set.reps,
+            })) || [];
 
-        if (completedExercises.length === 0) {
-          alert("No exercises were completed. Workout not saved.");
-          setLoadingVisible(false);
-          return;
+        if (validSets.length > 0) {
+          completedExercises.push({
+            title: exercise.title || exercise.name,
+            sets: validSets,
+          });
         }
+      });
 
-        const userRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
+      if (completedExercises.length === 0) {
+        alert("No exercises were completed. Workout not saved.");
+        setLoadingVisible(false);
+        return;
+      }
 
-        const workoutData = {
-          userId: currentUser.uid,
-          workoutTitle: title,
-          exercises: completedExercises,
-          timestamp: new Date(),
-          duration: timer,
-        };
+      const userRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      let previousEXP = userDoc.exists() ? userDoc.data().exp || 0 : 0;
 
-        const docRef = await addDoc(collection(db, "workouts"), workoutData);
-        console.log("Workout data added with ID", docRef.id);
+      const workoutData = {
+        userId: currentUser.uid,
+        workoutTitle: title,
+        exercises: completedExercises,
+        timestamp: new Date(),
+        duration: timer,
+      };
 
-        const bodyWeight = 175;
-        const isVerified = false;
-        const expResult = await awardEXP(
-          currentUser.uid,
-          workoutData.exercises,
-          bodyWeight,
-          isVerified,
+      const docRef = await addDoc(collection(db, "workouts"), workoutData);
+      console.log("Workout data added with ID", docRef.id);
+
+      const bodyWeight = 175; // later: pull from profile
+      const isVerified = false;
+
+      const expResult = await awardEXP(
+        currentUser.uid,
+        workoutData.exercises,
+        bodyWeight,
+        isVerified,
+      );
+
+      let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
+
+      completedExercises.forEach((exercise) => {
+        const exerciseName = (exercise.title || "").toLowerCase();
+        const maxWeight = Math.max(
+          ...exercise.sets.map((set) => parseInt(set.lbs || 0)),
         );
 
-        let newStats = { bestBench: 0, bestSquat: 0, bestDeadlift: 0 };
-
-        completedExercises.forEach((exercise) => {
-          const exerciseName = exercise.title.toLowerCase();
-          const maxWeight = Math.max(
-            ...exercise.sets.map((set) => parseInt(set.lbs || 0)),
-          );
-
-          if (exerciseName.includes("bench")) {
-            newStats.bestBench = Math.max(newStats.bestBench, maxWeight);
-          } else if (exerciseName.includes("squat")) {
-            newStats.bestSquat = Math.max(newStats.bestSquat, maxWeight);
-          } else if (exerciseName.includes("deadlift")) {
-            newStats.bestDeadlift = Math.max(newStats.bestDeadlift, maxWeight);
-          }
-        });
-
-        console.log("💪 Updating user stats with:", newStats);
-        await updateUserStats(currentUser.uid, newStats, isVerified);
-
-        if (expResult) {
-          const newEXP = expResult.exp;
-          const expEarned = newEXP - previousEXP;
-
-          setExpGained(expEarned);
-          setFinalExp(newEXP);
-          dispatch(fetchUserEXP(currentUser.uid));
-          setPerformedExercises(completedExercises);
-          setWorkoutSummaryVisible(true);
-        } else {
-          console.error("EXP calculation failed.");
+        if (exerciseName.includes("bench")) {
+          newStats.bestBench = Math.max(newStats.bestBench, maxWeight);
+        } else if (exerciseName.includes("squat")) {
+          newStats.bestSquat = Math.max(newStats.bestSquat, maxWeight);
+        } else if (exerciseName.includes("deadlift")) {
+          newStats.bestDeadlift = Math.max(newStats.bestDeadlift, maxWeight);
         }
+      });
+
+      console.log("💪 Updating user stats with:", newStats);
+      await updateUserStats(currentUser.uid, newStats, isVerified);
+
+      if (expResult) {
+        const newEXP = expResult.exp;
+        const expEarned = newEXP - previousEXP;
+
+        setExpGained(expEarned);
+        setFinalExp(newEXP);
+        dispatch(fetchUserEXP(currentUser.uid));
+        setPerformedExercises(completedExercises);
+        setWorkoutSummaryVisible(true);
       } else {
-        console.error("User is not authenticated");
+        console.error("EXP calculation failed.");
       }
     } catch (error) {
       console.error("Error adding workout data:", error);
@@ -265,7 +275,6 @@ const StartWorkout = ({ route }) => {
 
     setLoadingVisible(false);
   };
-
   const fetchPreviousWorkout = async () => {
     try {
       if (!currentUser) return;
@@ -338,19 +347,19 @@ const StartWorkout = ({ route }) => {
                 />
               </View>
             </View>
-  
+
             {exercises &&
               exercises.map((exercise, exerciseIndex) => (
                 <View key={exerciseIndex} style={styles.card}>
                   <Text style={styles.cardTitle}>{exercise.title}</Text>
-  
+
                   <View style={styles.setHeaderRow}>
                     <Text style={styles.setHeaderText}>Set</Text>
                     <Text style={styles.setHeaderText}>Prev</Text>
                     <Text style={styles.setHeaderText}>lbs</Text>
                     <Text style={styles.setHeaderText}>Reps</Text>
                   </View>
-  
+
                   {setInputs[exerciseIndex] &&
                     setInputs[exerciseIndex].map((set, setIndex) => (
                       <View
@@ -360,7 +369,7 @@ const StartWorkout = ({ route }) => {
                         <View style={styles.setColumn}>
                           <Text style={styles.setText}>{setIndex + 1}</Text>
                         </View>
-  
+
                         <View style={styles.setColumn}>
                           <Text style={styles.previousText}>
                             {previousData[exerciseIndex] &&
@@ -372,7 +381,7 @@ const StartWorkout = ({ route }) => {
                               : "---"}
                           </Text>
                         </View>
-  
+
                         <View style={styles.setColumn}>
                           <TextInput
                             style={styles.setInput}
@@ -390,7 +399,7 @@ const StartWorkout = ({ route }) => {
                             }
                           />
                         </View>
-  
+
                         <View style={styles.setColumn}>
                           <TextInput
                             style={styles.setInput}
@@ -410,7 +419,7 @@ const StartWorkout = ({ route }) => {
                         </View>
                       </View>
                     ))}
-  
+
                   <TouchableOpacity
                     onPress={() => handleAddSet(exerciseIndex)}
                     style={styles.secondaryButton}
@@ -419,11 +428,14 @@ const StartWorkout = ({ route }) => {
                   </TouchableOpacity>
                 </View>
               ))}
-  
-            <TouchableOpacity style={styles.neonButton} onPress={handleSaveWorkout}>
+
+            <TouchableOpacity
+              style={styles.neonButton}
+              onPress={handleSaveWorkout}
+            >
               <Text style={styles.neonButtonText}>SAVE WORKOUT</Text>
             </TouchableOpacity>
-  
+
             <Modal
               animationType="fade"
               transparent={true}
@@ -456,7 +468,7 @@ const StartWorkout = ({ route }) => {
                 </View>
               </View>
             </Modal>
-  
+
             <WorkoutSummary
               visible={workoutSummaryVisible}
               performedExercises={performedExercises}

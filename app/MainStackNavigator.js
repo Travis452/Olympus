@@ -7,6 +7,7 @@ import CustomWorkout from "./CustomWorkout";
 import MainTabs from "./MainTabs";
 import CreateProfile from "./CreateProfile";
 import Exercises from "./Exercises";
+import UserProfile from "./Userprofile";
 
 const Stack = createStackNavigator();
 
@@ -30,10 +31,7 @@ const MainStackNavigator = ({ hasProfile }) => {
         component={WorkoutDetail}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Exercises" 
-        component={Exercises} 
-      />
+      <Stack.Screen name="Exercises" component={Exercises} />
       <Stack.Screen
         name="Profile"
         component={Profile}
@@ -47,6 +45,12 @@ const MainStackNavigator = ({ hasProfile }) => {
       <Stack.Screen
         name="CustomWorkout"
         component={CustomWorkout}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

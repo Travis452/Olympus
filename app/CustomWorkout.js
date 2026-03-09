@@ -106,25 +106,25 @@ const CustomWorkout = ({ route }) => {
   useEffect(() => {
     if (route.params?.loadedWorkout) {
       const loaded = route.params.loadedWorkout;
-      
+
       // Set workout title
       setTitle(loaded.workoutTitle || "Custom Workout");
-      
+
       // Load exercises
       const exercises = loaded.exercises.map((ex) => ({
         name: ex.title,
         title: ex.title,
       }));
       setSelectedExercises(exercises);
-      
+
       // Initialize empty sets for new workout, but store previous data
       const initialSets = loaded.exercises.map(() => [{ lbs: "", reps: "" }]);
       setSetInputs(initialSets);
-      
+
       // Store previous sets as reference
       const previousSets = loaded.exercises.map((ex) => ex.sets || []);
       setPreviousData(previousSets);
-      
+
       console.log("✅ Loaded workout:", loaded.workoutTitle);
     }
   }, [route.params]);
@@ -196,9 +196,16 @@ const CustomWorkout = ({ route }) => {
 
       selectedExercises.forEach((exercise, exerciseIndex) => {
         const validSets =
-          setInputs[exerciseIndex]?.filter(
-            (set) => set.lbs !== "" && set.reps !== "",
-          ) || [];
+          setInputs[exerciseIndex]
+            ?.filter((set) => {
+              // Only require reps to be filled - weight can be empty (defaults to 0)
+              return set.reps !== "" && set.reps !== null;
+            })
+            .map((set) => ({
+              // Default weight to 0 if empty (for bodyweight exercises)
+              lbs: set.lbs === "" || set.lbs === null ? "0" : set.lbs,
+              reps: set.reps,
+            })) || [];
 
         if (validSets.length > 0) {
           completedExercises.push({
@@ -277,7 +284,6 @@ const CustomWorkout = ({ route }) => {
 
     setLoadingVisible(false);
   };
-
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase());
 

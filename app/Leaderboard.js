@@ -1,6 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Image } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -9,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 const RED = "#ff1a1a";
 
 const StrengthLeaderboard = () => {
+  const navigation = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState("bestBench");
   const [leaders, setLeaders] = useState([]);
 
@@ -24,7 +32,7 @@ const StrengthLeaderboard = () => {
         try {
           const q = query(
             collection(db, "users"),
-            orderBy(selectedCategory, "desc")
+            orderBy(selectedCategory, "desc"),
           );
 
           const querySnapshot = await getDocs(q);
@@ -41,14 +49,23 @@ const StrengthLeaderboard = () => {
       };
 
       fetchLeaders();
-    }, [selectedCategory])
+    }, [selectedCategory]),
   );
+
+  const handleUserPress = (userId) => {
+    console.log("🔥 USER PRESSED:", userId);
+    navigation.navigate("UserProfile", { userId });
+  };
 
   const renderItem = ({ item, index }) => {
     const hasPic = !!item.profilePic?.trim();
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => handleUserPress(item.id)}
+        activeOpacity={0.7}
+      >
         <View style={styles.left}>
           <View style={styles.rankPill}>
             <Text style={styles.rankText}>{index + 1}</Text>
@@ -76,7 +93,7 @@ const StrengthLeaderboard = () => {
         <View style={styles.right}>
           <Text style={styles.points}>{item[selectedCategory]} lbs</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
