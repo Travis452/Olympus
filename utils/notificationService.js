@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -151,7 +152,7 @@ export async function checkInactivityAndDecay(userId) {
       const message = HARSH_MESSAGES[Math.floor(Math.random() * HARSH_MESSAGES.length)];
       await sendNotification('Olympus', message);
       
-      console.log(`EXP decay applied: ${currentEXP} → ${newEXP}`);
+      console.log(`💔 EXP decay applied: ${currentEXP} → ${newEXP}`);
     }
   } catch (error) {
     console.error('Error checking inactivity:', error);
@@ -214,6 +215,12 @@ export async function initializeNotifications(userId, reminderHour = 18, reminde
   try {
     // Request permissions
     await registerForPushNotificationsAsync();
+
+    // Set default preferences to ON (enabled)
+    await AsyncStorage.setItem('dailyRemindersEnabled', 'true');
+    await AsyncStorage.setItem('inactivityWarningsEnabled', 'true');
+    await AsyncStorage.setItem('reminderHour', reminderHour.toString());
+    await AsyncStorage.setItem('reminderMinute', reminderMinute.toString());
 
     // Schedule daily reminder
     await scheduleDailyReminder(reminderHour, reminderMinute);
