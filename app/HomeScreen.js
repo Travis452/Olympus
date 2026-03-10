@@ -1,68 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   FlatList,
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../config/firebase";
-import useAuth from "../hooks/useAuth";
+import { useNavigation } from "@react-navigation/native";
 import Splits from "../components/Splits";
 import { SPLITS } from "../data/SPLITS";
 
 const HomeScreen = () => {
   console.log("Navigated to HomeScreen");
   const navigation = useNavigation();
-  const { user } = useAuth();
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch streak when screen is focused
-  useFocusEffect(
-    React.useCallback(() => {
-      if (user) {
-        fetchStreak();
-      }
-    }, [user])
-  );
-
-  const fetchStreak = async () => {
-    try {
-      if (!user) return;
-      
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const streak = userData.currentStreak || 0;
-        const lastWorkoutDate = userData.lastWorkoutDate?.toDate?.() || null;
-        
-        // Check if streak is still valid (within 48 hours)
-        if (lastWorkoutDate) {
-          const hoursSinceLastWorkout = (new Date() - lastWorkoutDate) / (1000 * 60 * 60);
-          if (hoursSinceLastWorkout > 48) {
-            // Streak broken - show 0
-            setCurrentStreak(0);
-          } else {
-            setCurrentStreak(streak);
-          }
-        } else {
-          setCurrentStreak(0);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching streak:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const onPress = () => {
     navigation.navigate("CustomWorkout");
@@ -100,32 +52,6 @@ const HomeScreen = () => {
   };
 
   const data = [
-    // Streak Counter Card (NEW!)
-    {
-      type: "static",
-      component: (
-        <View style={styles.streakCard}>
-          <View style={styles.streakContent}>
-            <Text style={styles.streakEmoji}>🔥</Text>
-            <View style={styles.streakInfo}>
-              <Text style={styles.streakNumber}>{currentStreak}</Text>
-              <Text style={styles.streakLabel}>DAY STREAK</Text>
-            </View>
-          </View>
-          {currentStreak > 0 && (
-            <Text style={styles.streakSubtext}>
-              Keep it going! Work out within 48 hours.
-            </Text>
-          )}
-          {currentStreak === 0 && (
-            <Text style={styles.streakSubtext}>
-              Start your streak! Log a workout today.
-            </Text>
-          )}
-        </View>
-      ),
-    },
-
     {
       type: "static",
       component: (
@@ -212,54 +138,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 28,
     gap: 16,
-  },
-
-  // Streak Card (NEW!)
-  streakCard: {
-    backgroundColor: "rgba(255,26,26,0.08)",
-    borderColor: RED,
-    borderWidth: 2,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: RED,
-    shadowOpacity: 0.8,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  streakContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  streakEmoji: {
-    fontSize: 60,
-    marginRight: 16,
-  },
-  streakInfo: {
-    flex: 1,
-  },
-  streakNumber: {
-    color: RED,
-    fontSize: 48,
-    fontFamily: "Orbitron_800ExtraBold",
-    letterSpacing: 2,
-    textShadowColor: RED,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  },
-  streakLabel: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Orbitron_700Bold",
-    letterSpacing: 2,
-    marginTop: -4,
-  },
-  streakSubtext: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 13,
-    fontFamily: "Orbitron_400Regular",
-    textAlign: "center",
   },
 
   // cards

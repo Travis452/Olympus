@@ -82,6 +82,8 @@ export const getUserEXP = async (userId) => {
         updatedAt:
           userData.updatedAt?.toDate?.().toISOString() ||
           new Date().toISOString(),
+        lastWorkoutDate:
+          userData.lastWorkoutDate?.toDate?.().toISOString() || null,
       };
     } else {
       console.log("No user data found");

@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from '@expo/vector-icons';
 import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -34,7 +35,9 @@ const Profile = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userStats, setUserStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [currentStreak, setCurrentStreak] = useState(0);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [editData, setEditData] = useState({
     username: "",
     height: "",
@@ -50,6 +53,7 @@ const Profile = () => {
   };
 
   const openEditModal = () => {
+    setSettingsModalVisible(false);
     setEditData({
       username: userStats.username || "",
       height: userStats.height || "",
@@ -145,7 +149,23 @@ const Profile = () => {
       const userRef = doc(db, "users", userId);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        setUserStats(userSnap.data());
+        const userData = userSnap.data();
+        setUserStats(userData);
+        
+        // Fetch streak
+        const streak = userData.currentStreak || 0;
+        const lastWorkoutDate = userData.lastWorkoutDate ? new Date(userData.lastWorkoutDate) : null;
+        
+        if (lastWorkoutDate) {
+          const hoursSinceLastWorkout = (new Date() - lastWorkoutDate) / (1000 * 60 * 60);
+          if (hoursSinceLastWorkout > 48) {
+            setCurrentStreak(0);
+          } else {
+            setCurrentStreak(streak);
+          }
+        } else {
+          setCurrentStreak(0);
+        }
       } else {
         console.log("No user data found.");
       }
@@ -189,7 +209,17 @@ const Profile = () => {
     >
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
         <SafeAreaView>
-          <Text style={styles.title}>PROFILE</Text>
+          {/* Header with Title and Settings Button */}
+          <View style={styles.header}>
+            <View style={{ width: 60 }} />
+            <Text style={styles.title}>PROFILE</Text>
+            <TouchableOpacity 
+              onPress={() => setSettingsModalVisible(true)}
+              style={styles.settingsButton}
+            >
+              <Ionicons name="settings-outline" size={28} color="#ff1a1a" />
+            </TouchableOpacity>
+          </View>
 
           {/* Profile Picture */}
           <View style={styles.user}>
@@ -247,18 +277,50 @@ const Profile = () => {
             </Text>
           </View>
 
-          {/* Edit Profile Button */}
-          <TouchableOpacity style={styles.neonButton} onPress={openEditModal}>
-            <Text style={styles.neonButtonText}>EDIT PROFILE</Text>
-          </TouchableOpacity>
+          <View style={styles.streakContainer}>
+                <Text style={styles.streakEmoji}></Text>
+                <Text style={styles.streakText}>
+                  {currentStreak} Day Streak
+                </Text>
+              </View>
 
-          {/* Notification Settings Button */}
-          <TouchableOpacity 
-            style={styles.neonButton} 
-            onPress={() => navigation.navigate('NotificationSettings')}
+          {/* Settings Modal */}
+          <Modal
+            visible={settingsModalVisible}
+            animationType="fade"
+            transparent
+            onRequestClose={() => setSettingsModalVisible(false)}
           >
-            <Text style={styles.neonButtonText}>NOTIFICATIONS</Text>
-          </TouchableOpacity>
+            <View style={styles.modalOverlay}>
+              <View style={styles.settingsModal}>
+                <Text style={styles.modalTitle}>SETTINGS</Text>
+                
+                <TouchableOpacity 
+                  style={styles.settingsOption}
+                  onPress={openEditModal}
+                >
+                  <Text style={styles.settingsOptionText}>EDIT PROFILE</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.settingsOption}
+                  onPress={() => {
+                    setSettingsModalVisible(false);
+                    navigation.navigate('NotificationSettings');
+                  }}
+                >
+                  <Text style={styles.settingsOptionText}>NOTIFICATIONS</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.settingsOption, { borderBottomWidth: 0 }]}
+                  onPress={() => setSettingsModalVisible(false)}
+                >
+                  <Text style={[styles.settingsOptionText, { color: '#888' }]}>CANCEL</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
 
           {/* Edit Modal */}
           <Modal
@@ -338,16 +400,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 20,
+  },
   title: {
     fontSize: 32,
     fontFamily: "Orbitron_800ExtraBold",
     color: RED,
     textAlign: "center",
-    marginVertical: 20,
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: 4,
     letterSpacing: 4,
+  },
+  settingsButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   user: {
     flexDirection: "row",
@@ -364,6 +436,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     marginLeft: 15,
+    flex: 1,
   },
   username: {
     fontSize: 22,
@@ -374,6 +447,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "rgba(255,255,255,0.7)",
     marginTop: 4,
+  },
+  streakContainer: {
+    flexDirection: "row",
+    justifyContent: 'center',
+    alignItems: "center",
+    marginTop: 8,
+  },
+  streakEmoji: {
+    fontSize: 20,
+    marginRight: 6,
+  },
+  streakText: {
+    color: RED,
+    fontSize: 16,
+    fontFamily: "Orbitron_700Bold",
   },
   levelContainer: {
     alignItems: "center",
@@ -452,9 +540,29 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.85)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  settingsModal: {
+    width: "80%",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: RED,
+    overflow: "hidden",
+  },
+  settingsOption: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+  },
+  settingsOptionText: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "Orbitron_700Bold",
+    letterSpacing: 1,
   },
   modalContent: {
     width: "85%",

@@ -92,8 +92,9 @@ const NotificationSettings = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <BackButton />
-          <Text style={styles.title}>NOTIFICATIONS</Text>
-          <View style={{ width: 40 }} />
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>NOTIFICATIONS</Text>
+          </View>
         </View>
 
         <ScrollView style={styles.content}>
@@ -207,8 +208,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 20,
+    position: 'relative',
+  },
+  titleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: -1,
   },
   title: {
     fontSize: 24,
@@ -217,7 +226,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: 4,
     letterSpacing: 3,
   },
   content: {

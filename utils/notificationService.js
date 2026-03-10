@@ -75,6 +75,7 @@ export async function scheduleDailyReminder(hour = 18, minute = 0) {
   await cancelDailyReminder();
 
   const trigger = {
+    type: 'daily',
     hour,
     minute,
     repeats: true,
@@ -150,7 +151,7 @@ export async function checkInactivityAndDecay(userId) {
       const message = HARSH_MESSAGES[Math.floor(Math.random() * HARSH_MESSAGES.length)];
       await sendNotification('Olympus', message);
       
-      console.log(`💔 EXP decay applied: ${currentEXP} → ${newEXP}`);
+      console.log(`EXP decay applied: ${currentEXP} → ${newEXP}`);
     }
   } catch (error) {
     console.error('Error checking inactivity:', error);
@@ -165,7 +166,10 @@ export async function sendNotification(title, body) {
       body,
       sound: true,
     },
-    trigger: null, // Send immediately
+    trigger: {
+      type: 'timeInterval',
+      seconds: 1,
+    },
   });
 }
 
@@ -173,6 +177,7 @@ export async function sendNotification(title, body) {
 export async function scheduleInactivityChecker(userId) {
   // Run every day at noon to check for EXP decay
   const trigger = {
+    type: 'daily',
     hour: 12,
     minute: 0,
     repeats: true,
