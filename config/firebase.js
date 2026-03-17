@@ -21,7 +21,7 @@ import {
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-import { LEVELS } from "./levels";
+import { LEVELS, getTierFromLevel, getExpForNextLevel } from "./levels";
 
 // Firebase Config
 const firebaseConfig = {
@@ -249,25 +249,58 @@ const getStrengthMultiplier = (liftWeight, bodyWeight) => {
   return 1.0;
 };
 
-// Progressive Overload EXP (Fix)
-const calculateProgressiveOverloadEXP = (
-  prevWeight,
-  prevReps,
-  newWeight,
-  newReps,
-) => {
+// NEW EXP CALCULATION SYSTEM - Rewards PRs and Progress
+const calculateSetEXP = async (userId, exerciseName, weight, reps) => {
   let expGain = 0;
 
-  if (newWeight > prevWeight) {
-    expGain += 25;
-    console.log(
-      `Weight increased from ${prevWeight} to ${newWeight} (+25 EXP)`,
-    );
+  // Get user's personal record for this exercise
+  const previousWorkout = await getPreviousWorkout(userId, exerciseName);
+  
+  if (!previousWorkout) {
+    // First time doing this exercise - base EXP for completing it
+    expGain = 20; // Just showing up and doing it
+    console.log(`🆕 First time doing ${exerciseName}: +${expGain} EXP`);
+    return expGain;
   }
 
-  if (newReps > prevReps) {
-    expGain += 15;
-    console.log(`Reps increased from ${prevReps} to ${newReps} (+15 EXP)`);
+  const prevWeight = parseFloat(previousWorkout.lbs || 0);
+  const prevReps = parseInt(previousWorkout.reps || 0);
+  const prevVolume = prevWeight * prevReps;
+  const newVolume = weight * reps;
+
+  // TIER 1: Personal Records - BIG REWARDS 🔥
+  if (weight > prevWeight && reps >= prevReps) {
+    // Weight PR!
+    expGain = 100;
+    console.log(`🏆 WEIGHT PR! ${exerciseName}: ${prevWeight} → ${weight} lbs (+100 EXP)`);
+  } else if (weight === prevWeight && reps > prevReps) {
+    // Rep PR at same weight!
+    expGain = 75;
+    console.log(`🏆 REP PR! ${exerciseName}: ${prevReps} → ${reps} reps (+75 EXP)`);
+  } else if (newVolume > prevVolume) {
+    // Volume PR (total weight × reps increased)
+    expGain = 50;
+    console.log(`📈 Volume PR! ${exerciseName}: ${prevVolume} → ${newVolume} (+50 EXP)`);
+  }
+  // TIER 2: Progressive Overload - SOLID GAINS 💪
+  else if (weight > prevWeight) {
+    // Increased weight (but fewer reps)
+    expGain = 40;
+    console.log(`⬆️ Weight increase: ${prevWeight} → ${weight} lbs (+40 EXP)`);
+  } else if (reps > prevReps) {
+    // Increased reps (but lower weight)
+    expGain = 30;
+    console.log(`⬆️ Rep increase: ${prevReps} → ${reps} reps (+30 EXP)`);
+  }
+  // TIER 3: Maintenance - BASE EXP ✅
+  else if (weight === prevWeight && reps === prevReps) {
+    // Same as last time - consistency matters
+    expGain = 15;
+    console.log(`✅ Matched previous: ${weight} lbs × ${reps} reps (+15 EXP)`);
+  } else {
+    // Decreased performance - still showed up
+    expGain = 5;
+    console.log(`💪 Consistency: completed set (+5 EXP)`);
   }
 
   return expGain;
@@ -302,45 +335,35 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
       const { title, sets } = exercise;
       const liftType = EXERCISE_TAGS[title]; // defined only for Big 3
 
-      // Get last logged workout for this exercise
-      const previousWorkout = await getPreviousWorkout(userId, title);
-      let prevWeight = previousWorkout
-        ? parseFloat(previousWorkout.lbs || 0)
-        : 0;
-      let prevReps = previousWorkout ? parseInt(previousWorkout.reps || 0) : 0;
-
       for (const set of sets) {
         const weight = parseFloat(set.lbs || 0);
         const reps = parseInt(set.reps || 0);
 
-        if (!previousWorkout) {
-          // ✅ First time doing THIS lift → reps-based EXP
-          const baseEXP = reps * 2;
-          totalEXP += baseEXP;
-          console.log(`🆕 First time doing ${title}: +${baseEXP} EXP`);
-        } else {
-          // ✅ Progressive overload
-          const overloadEXP = calculateProgressiveOverloadEXP(
-            prevWeight,
-            prevReps,
-            weight,
-            reps,
-          );
-          totalEXP += overloadEXP;
-        }
+        // Calculate EXP for this set based on PRs and progress
+        const setEXP = await calculateSetEXP(userId, title, weight, reps);
+        totalEXP += setEXP;
 
-        // 🏆 Big 3: only these get benchmark checks + leaderboard relevance
+        // 🏆 Big 3 Benchmark Bonus (225, 315, 405, 495, 585, 675)
         if (liftType && STRENGTH_BENCHMARKS[liftType]?.includes(weight)) {
           totalEXP += 250;
           requiresVerification = true;
           console.log(
-            `🏋️ Benchmark hit! ${title} - ${weight} lbs requires verification.`,
+            `🏋️ BENCHMARK HIT! ${title} - ${weight} lbs (+250 BONUS EXP)`,
           );
         }
       }
     }
 
     exp += totalEXP;
+
+    // Calculate new level based on EXP
+    for (let i = 0; i < LEVELS.length; i++) {
+      if (exp >= LEVELS[i].expRequired) {
+        level = i + 1;
+      } else {
+        break;
+      }
+    }
 
     // 🔥 STREAK CALCULATION
     const now = new Date();
@@ -380,6 +403,7 @@ export const awardEXP = async (userId, exercises, bodyWeight, isVerified) => {
     return { exp, level, currentStreak };
   } catch (error) {
     console.error("Error awarding EXP:", error);
+    return null;
   }
 };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StatusBar } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
@@ -6,6 +5,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import store, { persistor } from "./src/redux/store";
 import MainStackNavigator from "./app/MainStackNavigator";
 import AuthNavigation from "./app/AuthNavigation";
@@ -43,9 +43,15 @@ const App = () => {
           if (docSnap.exists()) {
             setHasProfile(true);
             
-            // 🔥 Initialize notifications when user logs in
-            await initializeNotifications(user.uid, 18, 0); // 6 PM default
-            console.log("✅ Notifications initialized for user:", user.uid);
+            // 🔥 Initialize notifications ONLY if not already initialized
+            const notificationsInitialized = await AsyncStorage.getItem('notificationsInitialized');
+            if (!notificationsInitialized) {
+              await initializeNotifications(user.uid, 18, 0); // 6 PM default
+              await AsyncStorage.setItem('notificationsInitialized', 'true');
+              console.log("✅ Notifications initialized for user:", user.uid);
+            } else {
+              console.log("✅ Notifications already initialized, skipping");
+            }
           } else {
             setHasProfile(false);
           }

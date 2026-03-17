@@ -16,6 +16,7 @@ import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from '@expo/vector-icons';
+import { getTierFromLevel, getExpForNextLevel } from "../config/levels";
 import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -199,8 +200,10 @@ const Profile = () => {
     );
   }
 
-  const expProgress = (exp || 0) % 1000;
-  const progressWidth = `${(expProgress / 1000) * 100}%`;
+  const expProgress = (exp || 0) % getExpForNextLevel(level || 1);
+  const progressWidth = `${(expProgress / getExpForNextLevel(level || 1)) * 100}%`;
+  const tierName = getTierFromLevel(level || 1);
+  const expForNext = getExpForNextLevel(level || 1);
 
   return (
     <LinearGradient
@@ -242,9 +245,17 @@ const Profile = () => {
               <Text style={styles.username}>
                 {userStats.username || user.firstName || "User"}
               </Text>
+              <Text style={styles.tierText}>{tierName}</Text>
               <Text style={styles.completedWorkoutsText}>
                 {completedWorkouts} Workouts
               </Text>
+              {/* Streak Display */}
+              <View style={styles.streakContainer}>
+                <Text style={styles.streakEmoji}>🔥</Text>
+                <Text style={styles.streakText}>
+                  {currentStreak} Day Streak
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -254,7 +265,7 @@ const Profile = () => {
             <View style={styles.expBarContainer}>
               <View style={[styles.expBarFill, { width: progressWidth }]} />
             </View>
-            <Text style={styles.expText}>{exp || 0} / 1000 EXP</Text>
+            <Text style={styles.expText}>{expProgress || 0} / {expForNext} EXP</Text>
           </View>
 
           {/* Stats */}
@@ -276,13 +287,6 @@ const Profile = () => {
               Best Deadlift: {userStats.bestDeadlift || 0} lbs
             </Text>
           </View>
-
-          <View style={styles.streakContainer}>
-                <Text style={styles.streakEmoji}></Text>
-                <Text style={styles.streakText}>
-                  {currentStreak} Day Streak
-                </Text>
-              </View>
 
           {/* Settings Modal */}
           <Modal
@@ -413,7 +417,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
+    textShadowRadius: 8,
     letterSpacing: 4,
   },
   settingsButton: {
@@ -443,6 +447,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#fff",
   },
+  tierText: {
+    fontSize: 14,
+    fontFamily: "Orbitron_700Bold",
+    color: RED,
+    marginTop: 2,
+    letterSpacing: 2,
+  },
   completedWorkoutsText: {
     fontSize: 16,
     color: "rgba(255,255,255,0.7)",
@@ -450,7 +461,6 @@ const styles = StyleSheet.create({
   },
   streakContainer: {
     flexDirection: "row",
-    justifyContent: 'center',
     alignItems: "center",
     marginTop: 8,
   },

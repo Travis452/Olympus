@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { getTierFromLevel, getExpForNextLevel, getExpRequiredForLevel, LEVELS } from "../config/levels";
 import BackButton from "../components/BackButton";
 
 const RED = "#ff1a1a";
@@ -28,7 +29,7 @@ const UserProfile = ({ route }) => {
     try {
       const userRef = doc(db, "users", userId);
       const userSnap = await getDoc(userRef);
-
+      
       if (userSnap.exists()) {
         setUserData(userSnap.data());
       } else {
@@ -43,25 +44,15 @@ const UserProfile = ({ route }) => {
 
   if (loading) {
     return (
-      <LinearGradient
-        colors={["#000", "#1a1a1a", "#000"]}
-        style={styles.gradient}
-      >
-        <ActivityIndicator
-          size="large"
-          color={RED}
-          style={{ marginTop: 100 }}
-        />
+      <LinearGradient colors={["#000", "#1a1a1a", "#000"]} style={styles.gradient}>
+        <ActivityIndicator size="large" color={RED} style={{ marginTop: 100 }} />
       </LinearGradient>
     );
   }
 
   if (!userData) {
     return (
-      <LinearGradient
-        colors={["#000", "#1a1a1a", "#000"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#000", "#1a1a1a", "#000"]} style={styles.gradient}>
         <BackButton />
         <Text style={styles.emptyText}>User not found</Text>
       </LinearGradient>
@@ -69,15 +60,25 @@ const UserProfile = ({ route }) => {
   }
 
   const exp = userData.exp || 0;
-  const level = userData.level || 1;
-  const expProgress = exp % 1000;
-  const progressWidth = `${(expProgress / 1000) * 100}%`;
+  
+  // Calculate actual level from LEVELS array
+  let level = 1;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (exp >= LEVELS[i].expRequired) {
+      level = LEVELS[i].level;
+    } else {
+      break;
+    }
+  }
+  
+  const tierName = getTierFromLevel(level);
+  const expForNext = getExpForNextLevel(level);
+  const expRequired = getExpRequiredForLevel(level);
+  const expProgress = exp - expRequired;
+  const progressWidth = `${(expProgress / expForNext) * 100}%`;
 
   return (
-    <LinearGradient
-      colors={["#000", "#1a1a1a", "#000"]}
-      style={styles.gradient}
-    >
+    <LinearGradient colors={["#000", "#1a1a1a", "#000"]} style={styles.gradient}>
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
         <SafeAreaView>
           <View style={styles.header}>
@@ -101,11 +102,9 @@ const UserProfile = ({ route }) => {
               <Text style={styles.username}>
                 {userData.username || userData.firstName || "User"}
               </Text>
+              <Text style={styles.tierText}>{tierName}</Text>
               <Text style={styles.joinedText}>
-                Joined{" "}
-                {userData.createdAt
-                  ? new Date(userData.createdAt).toLocaleDateString()
-                  : "Recently"}
+                Joined {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "Recently"}
               </Text>
             </View>
           </View>
@@ -116,7 +115,7 @@ const UserProfile = ({ route }) => {
             <View style={styles.expBarContainer}>
               <View style={[styles.expBarFill, { width: progressWidth }]} />
             </View>
-            <Text style={styles.expText}>{exp} / 1000 EXP</Text>
+            <Text style={styles.expText}>{expProgress} / {expForNext} EXP</Text>
           </View>
 
           {/* Stats */}
@@ -185,6 +184,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: "#fff",
+  },
+  tierText: {
+    fontSize: 14,
+    fontFamily: "Orbitron_700Bold",
+    color: RED,
+    marginTop: 2,
+    letterSpacing: 2,
   },
   joinedText: {
     fontSize: 14,
