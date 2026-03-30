@@ -11,6 +11,7 @@ import MainStackNavigator from "./app/MainStackNavigator";
 import AuthNavigation from "./app/AuthNavigation";
 import { db } from "./config/firebase";
 import { initializeNotifications } from "./utils/notificationService";
+import { registerForPushNotifications, savePushToken } from "./utils/notificationUtils";
 import {
   useFonts,
   Orbitron_400Regular,
@@ -43,14 +44,21 @@ const App = () => {
           if (docSnap.exists()) {
             setHasProfile(true);
             
-            // 🔥 Initialize notifications ONLY if not already initialized
+            // Initialize daily workout notifications
             const notificationsInitialized = await AsyncStorage.getItem('notificationsInitialized');
             if (!notificationsInitialized) {
               await initializeNotifications(user.uid, 18, 0); // 6 PM default
               await AsyncStorage.setItem('notificationsInitialized', 'true');
-              console.log("✅ Notifications initialized for user:", user.uid);
+              console.log("✅ Daily notifications initialized for user:", user.uid);
             } else {
-              console.log("✅ Notifications already initialized, skipping");
+              console.log("✅ Daily notifications already initialized, skipping");
+            }
+
+            // Register for push notifications (social interactions)
+            const pushToken = await registerForPushNotifications();
+            if (pushToken) {
+              await savePushToken(user.uid, pushToken);
+              console.log("✅ Push notifications registered");
             }
           } else {
             setHasProfile(false);

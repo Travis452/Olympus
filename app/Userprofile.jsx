@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Animated,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,17 +15,75 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { getTierFromLevel, getExpForNextLevel, getExpRequiredForLevel, LEVELS } from "../config/levels";
 import BackButton from "../components/BackButton";
+import useAuth from "../hooks/useAuth";
+import { followUser, unfollowUser, isFollowing, getFollowCounts } from "../utils/followUtils";
 
 const RED = "#ff1a1a";
 
 const UserProfile = ({ route }) => {
   const { userId } = route.params;
+  const { user } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(false);
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+
+  // RGB pulsing animation
+  const rgbAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Pulse through RGB colors
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rgbAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rgbAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, []);
 
   useEffect(() => {
     fetchUserData();
+    checkFollowStatus();
+    fetchFollowCounts();
   }, [userId]);
+
+  const checkFollowStatus = async () => {
+    if (user) {
+      const status = await isFollowing(user.uid, userId);
+      setFollowing(status);
+    }
+  };
+
+  const fetchFollowCounts = async () => {
+    const counts = await getFollowCounts(userId);
+    setFollowCounts(counts);
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user) return;
+
+    if (following) {
+      const result = await unfollowUser(user.uid, userId);
+      if (result.success) {
+        setFollowing(false);
+        setFollowCounts(prev => ({ ...prev, followers: prev.followers - 1 }));
+      }
+    } else {
+      const result = await followUser(user.uid, userId);
+      if (result.success) {
+        setFollowing(true);
+        setFollowCounts(prev => ({ ...prev, followers: prev.followers + 1 }));
+      }
+    }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -73,18 +133,23 @@ const UserProfile = ({ route }) => {
   
   const tierName = getTierFromLevel(level);
   const expForNext = getExpForNextLevel(level);
-  const expRequired = getExpRequiredForLevel(level);
-  const expProgress = exp - expRequired;
-  const progressWidth = `${(expProgress / expForNext) * 100}%`;
+  const expRequiredForCurrentLevel = getExpRequiredForLevel(level);
+  const totalExpForNextLevel = expRequiredForCurrentLevel + expForNext;
+  
+  // Calculate EXP within current level for progress bar
+  const expInCurrentLevel = exp - expRequiredForCurrentLevel;
+  const progressWidth = `${(expInCurrentLevel / expForNext) * 100}%`;
 
   return (
     <LinearGradient colors={["#000", "#1a1a1a", "#000"]} style={styles.gradient}>
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
         <SafeAreaView>
           <View style={styles.header}>
-            <BackButton />
+            <View style={{ width: 60 }}>
+              <BackButton />
+            </View>
             <Text style={styles.title}>USER PROFILE</Text>
-            <View style={{ width: 40 }} />
+            <View style={{ width: 60 }} />
           </View>
 
           {/* Profile Picture & Username */}
@@ -106,16 +171,57 @@ const UserProfile = ({ route }) => {
               <Text style={styles.joinedText}>
                 Joined {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "Recently"}
               </Text>
+              
+              {/* Follower/Following Counts */}
+              <View style={styles.followCountsContainer}>
+                <Text style={styles.followCount}>
+                  <Text style={styles.followCountNumber}>{followCounts.followers}</Text> Followers
+                </Text>
+                <Text style={styles.followCount}>
+                  <Text style={styles.followCountNumber}>{followCounts.following}</Text> Following
+                </Text>
+              </View>
             </View>
           </View>
+
+          {/* Follow/Unfollow Button */}
+          {user && user.uid !== userId && (
+            <TouchableOpacity 
+              style={[styles.followButton, following && styles.followingButton]}
+              onPress={handleFollowToggle}
+            >
+              <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
+                {following ? "UNFOLLOW" : "FOLLOW"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {/* EXP + Level */}
           <View style={styles.levelContainer}>
             <Text style={styles.levelText}>Level {level}</Text>
-            <View style={styles.expBarContainer}>
-              <View style={[styles.expBarFill, { width: progressWidth }]} />
-            </View>
-            <Text style={styles.expText}>{expProgress} / {expForNext} EXP</Text>
+            
+            {/* Pulsing RGB Border */}
+            <Animated.View
+              style={[
+                styles.expBarWrapper,
+                {
+                  shadowColor: rgbAnim.interpolate({
+                    inputRange: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
+                    outputRange: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#8b00ff', '#ff0000'],
+                  }),
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 4,
+                  elevation: 5,
+                },
+              ]}
+            >
+              <View style={styles.expBarContainer}>
+                <View style={[styles.expBarFill, { width: progressWidth }]} />
+              </View>
+            </Animated.View>
+            
+            <Text style={styles.expText}>{exp} / {totalExpForNextLevel} EXP</Text>
           </View>
 
           {/* Stats */}
@@ -152,16 +258,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginTop: 10,
     marginBottom: 20,
   },
   title: {
+    flex: 1,
     fontSize: 24,
     fontFamily: "Orbitron_800ExtraBold",
     color: RED,
     textAlign: "center",
     textShadowColor: RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: 4,
     letterSpacing: 3,
   },
   user: {
@@ -197,6 +305,48 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     marginTop: 4,
   },
+  followCountsContainer: {
+    flexDirection: "row",
+    marginTop: 12,
+    gap: 16,
+  },
+  followCount: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.6)",
+  },
+  followCountNumber: {
+    fontWeight: "bold",
+    color: "#fff",
+    fontSize: 16,
+  },
+  followButton: {
+    alignSelf: "center",
+    width: "50%",
+    borderWidth: 2,
+    borderColor: RED,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginBottom: 25,
+    backgroundColor: RED,
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  followingButton: {
+    backgroundColor: "transparent",
+  },
+  followButtonText: {
+    color: "#000",
+    fontFamily: "Orbitron_700Bold",
+    fontSize: 14,
+    letterSpacing: 1.5,
+  },
+  followingButtonText: {
+    color: RED,
+  },
   levelContainer: {
     alignItems: "center",
     marginBottom: 25,
@@ -206,13 +356,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
-  expBarContainer: {
+  expBarWrapper: {
     width: "80%",
+    marginTop: 10,
+    borderRadius: 8,
+  },
+  expBarContainer: {
+    width: "100%",
     height: 12,
     borderRadius: 6,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    marginTop: 10,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   expBarFill: {
     height: "100%",

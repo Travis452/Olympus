@@ -30,6 +30,7 @@ import { db, awardEXP, updateUserStats } from "../config/firebase";
 import { fetchUserEXP } from "../src/redux/userSlice";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
+import { createFeedPost } from "../utils/feedUtils";
 
 import Exercises from "./Exercises";
 import BackButton from "../components/BackButton";
@@ -54,6 +55,7 @@ const CustomWorkout = ({ route }) => {
   const [workoutDuration, setWorkoutDuration] = useState(0);
   const [title, setTitle] = useState("Custom Workout");
   const [finishModalVisible, setFinishModalVisible] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [previousData, setPreviousData] = useState([]);
   const scrollViewRef = useRef(null);
 
@@ -106,25 +108,25 @@ const CustomWorkout = ({ route }) => {
   useEffect(() => {
     if (route.params?.loadedWorkout) {
       const loaded = route.params.loadedWorkout;
-
+      
       // Set workout title
       setTitle(loaded.workoutTitle || "Custom Workout");
-
+      
       // Load exercises
       const exercises = loaded.exercises.map((ex) => ({
         name: ex.title,
         title: ex.title,
       }));
       setSelectedExercises(exercises);
-
+      
       // Initialize empty sets for new workout, but store previous data
       const initialSets = loaded.exercises.map(() => [{ lbs: "", reps: "" }]);
       setSetInputs(initialSets);
-
+      
       // Store previous sets as reference
       const previousSets = loaded.exercises.map((ex) => ex.sets || []);
       setPreviousData(previousSets);
-
+      
       console.log("✅ Loaded workout:", loaded.workoutTitle);
     }
   }, [route.params]);
@@ -196,16 +198,9 @@ const CustomWorkout = ({ route }) => {
 
       selectedExercises.forEach((exercise, exerciseIndex) => {
         const validSets =
-          setInputs[exerciseIndex]
-            ?.filter((set) => {
-              // Only require reps to be filled - weight can be empty (defaults to 0)
-              return set.reps !== "" && set.reps !== null;
-            })
-            .map((set) => ({
-              // Default weight to 0 if empty (for bodyweight exercises)
-              lbs: set.lbs === "" || set.lbs === null ? "0" : set.lbs,
-              reps: set.reps,
-            })) || [];
+          setInputs[exerciseIndex]?.filter(
+            (set) => set.lbs !== "" && set.reps !== "",
+          ) || [];
 
         if (validSets.length > 0) {
           completedExercises.push({
@@ -270,6 +265,9 @@ const CustomWorkout = ({ route }) => {
         const newEXP = expResult.exp;
         const expEarned = newEXP - previousEXP;
 
+        // Create feed post
+        await createFeedPost(currentUser.uid, workoutData, expEarned);
+
         setExpGained(expEarned);
         setFinalExp(newEXP);
         dispatch(fetchUserEXP(currentUser.uid));
@@ -284,6 +282,7 @@ const CustomWorkout = ({ route }) => {
 
     setLoadingVisible(false);
   };
+
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase());
 
@@ -307,7 +306,7 @@ const CustomWorkout = ({ route }) => {
             {/* Header */}
             <View style={styles.headerRow}>
               <View style={{ width: 60 }}>
-                <BackButton />
+                <BackButton onPress={() => setCancelModalVisible(true)} />
               </View>
               <Text style={styles.title}>CUSTOM WORKOUT</Text>
               <View style={{ width: 60, alignItems: "flex-end" }}>
@@ -478,6 +477,39 @@ const CustomWorkout = ({ route }) => {
                       style={styles.modalButtonSecondary}
                     >
                       <Text style={styles.modalButtonText}>CANCEL</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Cancel workout confirmation modal */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={cancelModalVisible}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Cancel Workout?</Text>
+                  <Text style={styles.modalBodyText}>
+                    Your progress will be lost if you leave without saving.
+                  </Text>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCancelModalVisible(false);
+                        navigation.goBack();
+                      }}
+                      style={styles.modalButtonPrimary}
+                    >
+                      <Text style={styles.modalButtonText}>YES</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setCancelModalVisible(false)}
+                      style={styles.modalButtonSecondary}
+                    >
+                      <Text style={styles.modalButtonText}>NO</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

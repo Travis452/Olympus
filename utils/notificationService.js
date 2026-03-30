@@ -16,9 +16,12 @@ Notifications.setNotificationHandler({
 
 // Daily motivation messages
 const DAILY_MESSAGES = [
-  "Show me you're serious. Log your session.",
-  "Time to earn your place. Track your progress.",
-  "Are we doing this today or not?",
+  // "Show me you're serious. Log your session.",
+  "Are you going to be a bitch today? Or are you going to get this shit?",
+  "Dont be a bitch today...",
+  "Go cry to mommy if you dont hit the gym today, because im going to hit you."
+  // "Time to earn your place. Track your progress.",
+  // "Are we doing this today or not?",
 ];
 
 // Day 3 disappointed messages

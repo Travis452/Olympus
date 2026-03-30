@@ -1,16 +1,16 @@
-// MainTabs.js
 import React from "react";
 import { View, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Home, User, Trophy, History } from "lucide-react-native";
+import { Home, User, Trophy, History, Activity } from "lucide-react-native";
 
 import HomeScreen from "./HomeScreen";
 import Login from "./Login";
 import Profile from "./Profile";
 import Leaderboard from "./Leaderboard";
 import WorkoutHistory from "./WorkoutHistory";
+import Feed from "./Feed";
 
 const Tab = createBottomTabNavigator();
 
@@ -70,6 +70,15 @@ const MainTabs = ({ route }) => {
           tabBarIcon: ({ color, size }) => <Home color={color} size={26} />,
         }}
       />
+      
+      <Tab.Screen
+        name="Feed"
+        component={Feed}
+        options={{
+          tabBarIcon: ({ color, size }) => <Activity color={color} size={26} />,
+        }}
+      />
+
       <Tab.Screen
         name="Profile"
         component={Profile}
@@ -77,6 +86,7 @@ const MainTabs = ({ route }) => {
           tabBarIcon: ({ color, size }) => <User color={color} size={26} />,
         }}
       />
+      
       <Tab.Screen
         name="Leaderboard"
         component={Leaderboard}

@@ -9,7 +9,7 @@ import CreateProfile from "./CreateProfile";
 import Exercises from "./Exercises";
 import UserProfile from "./Userprofile";
 import NotificationSettings from './NotificationSettings';
-
+import Notifications from "./Notifications";
 const Stack = createStackNavigator();
 
 const MainStackNavigator = ({ hasProfile }) => {
@@ -54,6 +54,12 @@ const MainStackNavigator = ({ hasProfile }) => {
         component={UserProfile}
         options={{ headerShown: false }}
       />
+
+<Stack.Screen
+  name="Notifications"
+  component={Notifications}
+  options={{ headerShown: false }}
+/>
 
 <Stack.Screen 
   name="NotificationSettings" 

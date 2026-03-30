@@ -35,6 +35,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { updateUserStats } from "../config/firebase";
 import { LinearGradient } from "expo-linear-gradient";
+import { createFeedPost } from "../utils/feedUtils";
 import WorkoutTimer from "../components/WorkoutTimer";
 import BackButton from "../components/BackButton";
 import LoadingScreen from "../components/LoadingScreen";
@@ -185,7 +186,7 @@ const StartWorkout = ({ route }) => {
 
       let completedExercises = [];
 
-      selectedExercises.forEach((exercise, exerciseIndex) => {
+      exercises.forEach((exercise, exerciseIndex) => {
         const validSets =
           setInputs[exerciseIndex]
             ?.filter((set) => {
@@ -261,6 +262,9 @@ const StartWorkout = ({ route }) => {
         const newEXP = expResult.exp;
         const expEarned = newEXP - previousEXP;
 
+        // Create feed post
+        await createFeedPost(currentUser.uid, workoutData, expEarned);
+
         setExpGained(expEarned);
         setFinalExp(newEXP);
         dispatch(fetchUserEXP(currentUser.uid));
@@ -275,6 +279,7 @@ const StartWorkout = ({ route }) => {
 
     setLoadingVisible(false);
   };
+  
   const fetchPreviousWorkout = async () => {
     try {
       if (!currentUser) return;

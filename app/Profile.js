@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   TextInput,
   Modal,
+  Animated,
 } from "react-native";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
@@ -16,13 +17,16 @@ import { fetchUserEXP } from "../src/redux/userSlice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from '@expo/vector-icons';
-import { getTierFromLevel, getExpForNextLevel } from "../config/levels";
+import { getTierFromLevel, getExpForNextLevel, getExpRequiredForLevel, LEVELS } from "../config/levels";
 import useAuth from "../hooks/useAuth";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { db, storage } from "../config/firebase";
+import { validateAndReserveUsername } from "../utils/usernameUtils";
+import { getFollowCounts } from "../utils/followUtils";
+import BellIcon from "../components/BellIcon";
 
 const RED = "#ff1a1a";
 
@@ -37,6 +41,7 @@ const Profile = () => {
   const [userStats, setUserStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [editData, setEditData] = useState({
@@ -46,6 +51,27 @@ const Profile = () => {
   });
 
   const isFocused = useIsFocused();
+  
+  // RGB pulsing animation
+  const rgbAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Pulse through RGB colors
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rgbAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rgbAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, []);
 
   const handleLogout = async () => {
     const auth = getAuth();
@@ -68,18 +94,41 @@ const Profile = () => {
       alert("All fields are required");
       return;
     }
+
     try {
+      // Validate and reserve username
+      const oldUsername = userStats.username;
+      const usernameResult = await validateAndReserveUsername(
+        editData.username,
+        user.uid,
+        oldUsername
+      );
+
+      if (!usernameResult.success) {
+        alert(usernameResult.error);
+        return;
+      }
+
+      // Update user profile in Firestore
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-        username: editData.username,
+        username: usernameResult.username,
         height: editData.height,
         weight: parseInt(editData.weight) || 0,
       });
+      
       await fetchUserStats(user.uid);
       setEditModalVisible(false);
+      alert("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
+      alert("Failed to update profile");
     }
+  };
+
+  const fetchFollowCounts = async (userId) => {
+    const counts = await getFollowCounts(userId);
+    setFollowCounts(counts);
   };
 
   useEffect(() => {
@@ -88,6 +137,7 @@ const Profile = () => {
       if (user.profilePic) {
         setProfilePic(user.profilePic);
       }
+      fetchFollowCounts(user.uid);
     }
   }, [user, dispatch]);
 
@@ -186,6 +236,7 @@ const Profile = () => {
         });
 
       fetchUserStats(currentUser.uid);
+      fetchFollowCounts(currentUser.uid);
     }
   }, [currentUser, isFocused]);
 
@@ -200,10 +251,37 @@ const Profile = () => {
     );
   }
 
-  const expProgress = (exp || 0) % getExpForNextLevel(level || 1);
-  const progressWidth = `${(expProgress / getExpForNextLevel(level || 1)) * 100}%`;
-  const tierName = getTierFromLevel(level || 1);
-  const expForNext = getExpForNextLevel(level || 1);
+  // Calculate level from EXP if not set in Redux
+  let calculatedLevel = level || 1;
+  if (!level && exp) {
+    for (let i = 0; i < LEVELS.length; i++) {
+      if (exp >= LEVELS[i].expRequired) {
+        calculatedLevel = LEVELS[i].level;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  const tierName = getTierFromLevel(calculatedLevel);
+  const expForNext = getExpForNextLevel(calculatedLevel);
+  const expRequiredForCurrentLevel = getExpRequiredForLevel(calculatedLevel);
+  const totalExpForNextLevel = expRequiredForCurrentLevel + expForNext;
+  
+  // Calculate EXP within current level for progress bar
+  const expInCurrentLevel = (exp || 0) - expRequiredForCurrentLevel;
+  const progressWidth = `${(expInCurrentLevel / expForNext) * 100}%`;
+  
+  console.log('Profile EXP Debug:', {
+    level,
+    calculatedLevel,
+    exp,
+    tierName,
+    expForNext,
+    expRequiredForCurrentLevel,
+    totalExpForNextLevel,
+    progressWidth
+  });
 
   return (
     <LinearGradient
@@ -212,16 +290,16 @@ const Profile = () => {
     >
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
         <SafeAreaView>
-          {/* Header with Title and Settings Button */}
+          {/* Header with Title and Bell Icon */}
           <View style={styles.header}>
-            <View style={{ width: 60 }} />
-            <Text style={styles.title}>PROFILE</Text>
             <TouchableOpacity 
               onPress={() => setSettingsModalVisible(true)}
               style={styles.settingsButton}
             >
               <Ionicons name="settings-outline" size={28} color="#ff1a1a" />
             </TouchableOpacity>
+            <Text style={styles.title}>PROFILE</Text>
+            <BellIcon />
           </View>
 
           {/* Profile Picture */}
@@ -256,16 +334,44 @@ const Profile = () => {
                   {currentStreak} Day Streak
                 </Text>
               </View>
+              {/* Follower/Following Counts */}
+              <View style={styles.followCountsContainer}>
+                <Text style={styles.followCount}>
+                  <Text style={styles.followCountNumber}>{followCounts.followers}</Text> Followers
+                </Text>
+                <Text style={styles.followCount}>
+                  <Text style={styles.followCountNumber}>{followCounts.following}</Text> Following
+                </Text>
+              </View>
             </View>
           </View>
 
           {/* EXP + Level */}
           <View style={styles.levelContainer}>
-            <Text style={styles.levelText}>Level {level}</Text>
-            <View style={styles.expBarContainer}>
-              <View style={[styles.expBarFill, { width: progressWidth }]} />
-            </View>
-            <Text style={styles.expText}>{expProgress || 0} / {expForNext} EXP</Text>
+            <Text style={styles.levelText}>Level {calculatedLevel}</Text>
+            
+            {/* Pulsing RGB Border */}
+            <Animated.View
+              style={[
+                styles.expBarWrapper,
+                {
+                  shadowColor: rgbAnim.interpolate({
+                    inputRange: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
+                    outputRange: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#8b00ff', '#ff0000'],
+                  }),
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.9,
+                  shadowRadius: 8,
+                  elevation: 10,
+                },
+              ]}
+            >
+              <View style={styles.expBarContainer}>
+                <View style={[styles.expBarFill, { width: progressWidth }]} />
+              </View>
+            </Animated.View>
+            
+            <Text style={styles.expText}>{exp || 0} / {totalExpForNextLevel} EXP</Text>
           </View>
 
           {/* Stats */}
@@ -473,6 +579,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Orbitron_700Bold",
   },
+  followCountsContainer: {
+    flexDirection: "row",
+    marginTop: 12,
+    gap: 16,
+  },
+  followCount: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.6)",
+  },
+  followCountNumber: {
+    fontWeight: "bold",
+    color: "#fff",
+    fontSize: 16,
+  },
   levelContainer: {
     alignItems: "center",
     marginBottom: 25,
@@ -482,13 +602,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
-  expBarContainer: {
+  expBarWrapper: {
     width: "80%",
+    marginTop: 10,
+    borderRadius: 8,
+  },
+  expBarContainer: {
+    width: "100%",
     height: 12,
     borderRadius: 6,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    marginTop: 10,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   expBarFill: {
     height: "100%",
