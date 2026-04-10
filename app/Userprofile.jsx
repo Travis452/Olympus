@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { getTierFromLevel, getExpForNextLevel, getExpRequiredForLevel, LEVELS } from "../config/levels";
 import BackButton from "../components/BackButton";
@@ -51,16 +51,24 @@ const UserProfile = ({ route }) => {
 
   useEffect(() => {
     fetchUserData();
-    checkFollowStatus();
     fetchFollowCounts();
   }, [userId]);
 
-  const checkFollowStatus = async () => {
-    if (user) {
-      const status = await isFollowing(user.uid, userId);
-      setFollowing(status);
-    }
-  };
+  // Real-time listener for follow status
+  useEffect(() => {
+    if (!user) return;
+
+    const currentUserRef = doc(db, "users", user.uid);
+    
+    const unsubscribe = onSnapshot(currentUserRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const following = snapshot.data().following || [];
+        setFollowing(following.includes(userId));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user, userId]);
 
   const fetchFollowCounts = async () => {
     const counts = await getFollowCounts(userId);
@@ -73,13 +81,11 @@ const UserProfile = ({ route }) => {
     if (following) {
       const result = await unfollowUser(user.uid, userId);
       if (result.success) {
-        setFollowing(false);
         setFollowCounts(prev => ({ ...prev, followers: prev.followers - 1 }));
       }
     } else {
       const result = await followUser(user.uid, userId);
       if (result.success) {
-        setFollowing(true);
         setFollowCounts(prev => ({ ...prev, followers: prev.followers + 1 }));
       }
     }
@@ -191,7 +197,7 @@ const UserProfile = ({ route }) => {
               onPress={handleFollowToggle}
             >
               <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
-                {following ? "UNFOLLOW" : "FOLLOW"}
+                {following ? "FOLLOWING" : "FOLLOW"}
               </Text>
             </TouchableOpacity>
           )}
